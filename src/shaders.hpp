@@ -5,6 +5,10 @@
 #include <vector>
 #include <map>
 
+struct Shader;
+
+
+
 struct Shader {
 	enum class Type {
 		VERTEX = GL_VERTEX_SHADER,
@@ -15,6 +19,10 @@ struct Shader {
 		{Type::VERTEX, "Vertex"},
 		{Type::FRAGMENT, "Fragment"}
 	};
+
+	// static section deals with all shaders
+	static void show_shaders_gui(bool& show);
+
 
 	bool compiled = false;
 	Type type;
@@ -35,10 +43,19 @@ struct Shader {
 struct Program {
 	bool linked;
 	std::vector<Shader> shaders;
+	std::string name;
+
+	Shader* vertex_shader;
+	Shader* fragment_shader;
+
 	uint32_t program_id;
 	std::string info_log;
 
+	static void show_programs_gui(bool& show);
 
-	void render_gui();
+	Program();
+
+	void render_gui_segment();
 	void link(std::vector<Shader>& shaders);
 };
+

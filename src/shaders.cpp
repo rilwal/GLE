@@ -5,6 +5,10 @@
 #include <iterator>
 #include <algorithm>
 
+std::vector<Shader*> shaders;
+std::vector<Program*> programs;
+
+
 void Shader::load_from_file(std::string filename, Shader::Type type) {
 	FILE* file;
 	this->filename = filename;
@@ -51,16 +55,75 @@ void Shader::load_from_file(std::string filename, Shader::Type type) {
 	glGetShaderiv(shader_id, GL_INFO_LOG_LENGTH, &log_length);
 	info_log.resize(log_length);
 	glGetShaderInfoLog(shader_id, log_length, &log_length, &info_log[0]);
-		
 
+	shaders.push_back(this);
 }
 
 void Shader::render_gui_segment() {
-	if (ImGui::CollapsingHeader(filename.c_str(), ImGuiTreeNodeFlags_DefaultOpen)) {
-		ImGui::Text("Filename: %s", filename.c_str());
-		ImGui::Text("Type: %s", TypeNames.at(type).c_str());
-		ImGui::Text("Compiled: %s", compiled ? "True" : "False");
+	ImGui::PushID(this);
+
+	ImGui::TableNextRow();
+	ImGui::TableSetColumnIndex(0);
+
+	//bool node_open = ImGui::TreeNode("Object", "%s_%u", prefix, uid);
+	bool node_open = ImGui::TreeNode(this, filename.c_str());
+	if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_None)) {
+		Shader* shader = this;
+		ImGui::SetDragDropPayload("SHADER", &shader, sizeof(Shader*));
+		ImGui::Text(filename.c_str());
+		ImGui::EndDragDropSource();
+	}
+
+	if (node_open) {
+
+		ImGui::TableNextRow();
+		ImGui::TableSetColumnIndex(0);
+
+		ImGui::Text("Filename:");
+		ImGui::TableNextColumn();
+		ImGui::Text(filename.c_str());
+
+		ImGui::TableNextRow();
+		ImGui::TableSetColumnIndex(0);
+
+
+		ImGui::Text("Type:");
+		ImGui::TableNextColumn();
+		ImGui::Text(TypeNames.at(type).c_str());
+
+
+		ImGui::TableNextRow();
+		ImGui::TableSetColumnIndex(0);
+
+		ImGui::Text("Compiled:");
+		ImGui::TableNextColumn();
+		ImGui::Text(compiled ? "True" : "False");
+
+
+		ImGui::TableNextRow();
+		ImGui::TableSetColumnIndex(1);
+
+
 		if (ImGui::Button("Info Log")) show_info_log = true;
+
+		ImGui::TreePop();
+	}
+
+
+	ImGui::PopID();
+}
+
+void Shader::show_shaders_gui(bool& show) {
+	if (ImGui::Begin("Shaders", &show)) {
+		if (ImGui::BeginTable("split", 2, ImGuiTableFlags_BordersOuter | ImGuiTableFlags_Resizable)) {
+
+			for (auto& shader : shaders) {
+				shader->render_gui_segment();
+			}
+
+			ImGui::EndTable();
+		}
+		ImGui::End();
 	}
 }
 
@@ -75,6 +138,14 @@ void Shader::render_info_log() {
 		ImGui::End();
 	}
 }
+
+
+Program::Program() {
+	name = "Untitled Program";
+	programs.push_back(this);
+	vertex_shader = nullptr;
+}
+
 
 void Program::link(std::vector<Shader>& shaders) {
 	std::copy(shaders.begin(), shaders.end(), std::back_inserter(this->shaders));
@@ -98,16 +169,48 @@ void Program::link(std::vector<Shader>& shaders) {
 }
 
 
-void Program::render_gui() {
-	if (ImGui::CollapsingHeader("Program", ImGuiTreeNodeFlags_DefaultOpen)) {
+void Program::render_gui_segment() {
+	if (ImGui::CollapsingHeader(name.c_str(), ImGuiTreeNodeFlags_DefaultOpen)) {
 		ImGui::Text("Linked: %s", linked ? "True" : "False");
 
-		for (auto& shader : shaders) {
-			shader.render_gui_segment();
+		if (ImGui::BeginTable("Program", 2, ImGuiTableFlags_BordersOuter | ImGuiTableFlags_Resizable)) {
+			ImGui::TableNextRow();
+			ImGui::TableSetColumnIndex(0);
+
+			ImGui::Text("Vertex Shader");
+
+			if (ImGui::BeginDragDropTarget()) {
+				if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("SHADER")) {
+					vertex_shader = *(Shader**)payload->Data;
+				}
+
+				ImGui::EndDragDropTarget();
+			}
+			ImGui::TableNextColumn();
+
+			
+			ImGui::Text(vertex_shader ? vertex_shader->filename.c_str() : "");
+			
+
+
+
+
+			ImGui::EndTable();
 		}
 	}
 
 	for (auto& shader : shaders) {
 		shader.render_info_log();
+	}
+}
+
+void Program::show_programs_gui(bool& show) {
+	if (ImGui::Begin("Programs", &show)) {
+		for (auto& program : programs) {
+			program->render_gui_segment();
+		}
+
+		
+		ImGui::End();
 	}
 }

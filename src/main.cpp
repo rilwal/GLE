@@ -12,7 +12,6 @@
 
 const char* glsl_version = "#version 440";
 
-std::vector<Shader> shaders;
 
 int main() {
 
@@ -24,7 +23,7 @@ int main() {
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 4);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-	GLFWwindow* window = glfwCreateWindow(1280, 800, "GLE", nullptr, nullptr);
+	GLFWwindow* window = glfwCreateWindow(1920, 1080, "GLE", nullptr, nullptr);
 
 	glfwMakeContextCurrent(window);
 	gladLoadGL(glfwGetProcAddress);
@@ -34,11 +33,8 @@ int main() {
 	s.load_from_file("test.frag", Shader::Type::FRAGMENT);
 	t.load_from_file("test.vert", Shader::Type::VERTEX);
 
-	shaders.push_back(s);
-	shaders.push_back(t);
 
 	Program p;
-	p.link(shaders);
 
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
@@ -57,12 +53,17 @@ int main() {
 		ImGui_ImplGlfw_NewFrame();
 		ImGui::NewFrame();
 
-		static bool show_shader_windpw = true;
-		if (show_shader_windpw) {
-			if (ImGui::Begin("Shaders", &show_shader_windpw)) {
-				p.render_gui();
-				ImGui::End();
-			}
+
+		ImGui::ShowDemoWindow();
+
+		static bool show_shader_window = true;
+		if (show_shader_window) {
+			Shader::show_shaders_gui(show_shader_window);
+		}
+
+		static bool show_program_window = true;
+		if (show_program_window) {
+			Program::show_programs_gui(show_program_window);
 		}
 
 		ImGui::Render();
