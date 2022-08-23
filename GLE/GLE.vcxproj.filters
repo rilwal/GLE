@@ -48,9 +48,15 @@
     <ClCompile Include="..\imgui\misc\cpp\imgui_stdlib.cpp">
       <Filter>Source Files\imgui</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\model.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\shaders.hpp">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\model.hpp">
       <Filter>Source Files</Filter>
     </ClInclude>
   </ItemGroup>

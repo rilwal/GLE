@@ -164,9 +164,11 @@
     <ClCompile Include="..\imgui\imgui_widgets.cpp" />
     <ClCompile Include="..\imgui\misc\cpp\imgui_stdlib.cpp" />
     <ClCompile Include="..\src\main.cpp" />
+    <ClCompile Include="..\src\model.cpp" />
     <ClCompile Include="..\src\shaders.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\src\model.hpp" />
     <ClInclude Include="..\src\shaders.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
