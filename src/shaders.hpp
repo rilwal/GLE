@@ -26,11 +26,14 @@ struct Shader {
 
 	bool compiled = false;
 	Type type;
+	std::string name;
 	std::string filename;
 	std::string source;
 	std::string info_log;
 
 	uint32_t shader_id;
+
+	Shader();
 
 	bool show_info_log = false;
 

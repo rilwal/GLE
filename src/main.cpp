@@ -57,9 +57,8 @@ int main() {
 		ImGui::ShowDemoWindow();
 
 		static bool show_shader_window = true;
-		if (show_shader_window) {
-			Shader::show_shaders_gui(show_shader_window);
-		}
+		
+		Shader::show_shaders_gui(show_shader_window);
 
 		static bool show_program_window = true;
 		if (show_program_window) {

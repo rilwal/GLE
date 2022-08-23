@@ -9,6 +9,10 @@ std::vector<Shader*> shaders;
 std::vector<Program*> programs;
 
 
+Shader::Shader() {
+	shaders.push_back(this);
+}
+
 void Shader::load_from_file(std::string filename, Shader::Type type) {
 	FILE* file;
 	this->filename = filename;
@@ -55,8 +59,6 @@ void Shader::load_from_file(std::string filename, Shader::Type type) {
 	glGetShaderiv(shader_id, GL_INFO_LOG_LENGTH, &log_length);
 	info_log.resize(log_length);
 	glGetShaderInfoLog(shader_id, log_length, &log_length, &info_log[0]);
-
-	shaders.push_back(this);
 }
 
 void Shader::render_gui_segment() {
@@ -114,7 +116,11 @@ void Shader::render_gui_segment() {
 }
 
 void Shader::show_shaders_gui(bool& show) {
-	if (ImGui::Begin("Shaders", &show)) {
+	static bool show_create_shader_window = false;
+
+	// Main shaders window
+	if (show && ImGui::Begin("Shaders", &show)) {
+		// First, show the table of existing shaders
 		if (ImGui::BeginTable("split", 2, ImGuiTableFlags_BordersOuter | ImGuiTableFlags_Resizable)) {
 
 			for (auto& shader : shaders) {
@@ -123,6 +129,41 @@ void Shader::show_shaders_gui(bool& show) {
 
 			ImGui::EndTable();
 		}
+
+		// Then, render the interface to create a new shader
+		if (ImGui::Button("+")) {
+			show_create_shader_window = true;
+		}
+
+		ImGui::End();
+	}
+
+	if (show_create_shader_window && ImGui::Begin("Create Shader", &show_create_shader_window)) {
+		static char name[1024];
+		static char filename[1024];
+		static Shader::Type type;
+		static int selected_type;
+
+		ImGui::InputText("Name", name, 1024);					// TODO: Default naming?
+		ImGui::InputText("Filename", filename, 1024);			// TODO: File open dialog?
+		
+		const char* const items[2] = { "Vertex", "Fragment" };	// TODO: Generate this from the actual enum
+		ImGui::Combo("Type", &selected_type, items, 2);
+
+
+		if (ImGui::Button("Cancel")) {
+			show_create_shader_window = false;
+		}
+		ImGui::SameLine();
+		if (ImGui::Button("Add")) {
+			Shader* s = new Shader();
+			s->name = std::string(name);
+			s->filename = std::string(filename);
+			s->type = selected_type == 0 ? Shader::Type::VERTEX : Shader::Type::FRAGMENT; //TODO: Fix this janky hack lol
+
+			show_create_shader_window = false;
+		}
+
 		ImGui::End();
 	}
 }
