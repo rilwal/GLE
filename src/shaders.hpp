@@ -5,9 +5,6 @@
 #include <vector>
 #include <map>
 
-struct Shader;
-
-
 
 struct Shader {
 	enum class Type {
@@ -15,12 +12,12 @@ struct Shader {
 		FRAGMENT = GL_FRAGMENT_SHADER
 	};
 
-	const std::map<Type, std::string> TypeNames = {
+	static inline const std::map<Type, std::string> TypeNames = {
 		{Type::VERTEX, "Vertex"},
 		{Type::FRAGMENT, "Fragment"}
 	};
 
-	// static section deals with all shaders
+	// shows the GUI for all shaders
 	static void show_shaders_gui(bool& show);
 
 
@@ -33,6 +30,7 @@ struct Shader {
 
 	uint32_t shader_id;
 
+
 	Shader();
 
 	bool show_info_log = false;
@@ -44,7 +42,9 @@ struct Shader {
 };
 
 struct Program {
-	bool linked;
+	bool linked = false;
+	bool show_info_log = false;
+
 	std::vector<Shader> shaders;
 	std::string name;
 
@@ -54,11 +54,16 @@ struct Program {
 	uint32_t program_id;
 	std::string info_log;
 
+	std::vector<std::string> float_uniforms;
+	std::vector<float> float_uniform_values;
+
+
+
 	static void show_programs_gui(bool& show);
 
 	Program();
 
 	void render_gui_segment();
-	void link(std::vector<Shader>& shaders);
+	void link();
 };
 

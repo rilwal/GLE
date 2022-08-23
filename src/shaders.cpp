@@ -2,6 +2,7 @@
 #include "shaders.hpp"
 #include <cstdio>
 #include <imgui.h>
+#include <misc/cpp/imgui_stdlib.h>
 #include <iterator>
 #include <algorithm>
 
@@ -15,6 +16,8 @@ Shader::Shader() {
 
 void Shader::load_from_file(std::string filename, Shader::Type type) {
 	FILE* file;
+	if (name.empty())
+		name = filename;
 	this->filename = filename;
 	this->type = type;
 
@@ -59,6 +62,114 @@ void Shader::load_from_file(std::string filename, Shader::Type type) {
 	glGetShaderiv(shader_id, GL_INFO_LOG_LENGTH, &log_length);
 	info_log.resize(log_length);
 	glGetShaderInfoLog(shader_id, log_length, &log_length, &info_log[0]);
+
+}
+
+
+void GuiShaderTypeComboBox(std::string label, Shader::Type& prop) {
+	static std::vector<const char*> labels;
+	static std::vector<int> values;
+
+	static bool initialized = false;
+
+	if (!initialized) {
+		initialized = true;
+		for (const auto& pair : Shader::TypeNames) {
+			labels.push_back(pair.second.c_str());
+			values.push_back(static_cast<int>(pair.first));
+		}
+	}
+
+	int current = std::find(values.begin(), values.end(), static_cast<int>(prop)) - values.begin();
+	if(ImGui::Combo(label.c_str(), &current, &labels[0], (int)labels.size()))
+		prop = static_cast<Shader::Type>(values[current]);
+	
+}
+
+
+//TODO: Move to another file, and clean up
+// Adds a string property to a property list
+void GuiProperty(std::string label, std::string& prop) {
+
+	constexpr auto leaf_node_flags = ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen | ImGuiTreeNodeFlags_Bullet;
+
+	ImGui::PushID(label.c_str());
+	ImGui::TableSetColumnIndex(0);
+	ImGui::AlignTextToFramePadding();
+
+	ImGui::TreeNodeEx(label.c_str(), leaf_node_flags, label.c_str());
+
+	ImGui::TableSetColumnIndex(1);
+	ImGui::SetNextItemWidth(-FLT_MIN);
+
+	ImGui::InputText("", &prop);
+	ImGui::NextColumn();
+	ImGui::PopID();
+
+	ImGui::TableNextRow();
+}
+
+// Adds a shader type property to a property list
+void GuiProperty(std::string label, Shader::Type& prop) {
+
+	constexpr auto leaf_node_flags = ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen | ImGuiTreeNodeFlags_Bullet;
+
+	ImGui::PushID(label.c_str());
+	ImGui::TableSetColumnIndex(0);
+	ImGui::AlignTextToFramePadding();
+
+	ImGui::TreeNodeEx(label.c_str(), leaf_node_flags, label.c_str());
+
+	ImGui::TableSetColumnIndex(1);
+	ImGui::SetNextItemWidth(-FLT_MIN);
+
+	GuiShaderTypeComboBox("", prop);
+	ImGui::NextColumn();
+	ImGui::PopID();
+
+	ImGui::TableNextRow();
+}
+
+// Adds a float property to a property list
+void GuiProperty(std::string label, float& prop) {
+
+	constexpr auto leaf_node_flags = ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen | ImGuiTreeNodeFlags_Bullet;
+
+	ImGui::PushID(label.c_str());
+	ImGui::TableSetColumnIndex(0);
+	ImGui::AlignTextToFramePadding();
+
+	ImGui::TreeNodeEx(label.c_str(), leaf_node_flags, label.c_str());
+
+	ImGui::TableSetColumnIndex(1);
+	ImGui::SetNextItemWidth(-FLT_MIN);
+
+	ImGui::DragFloat("", &prop, .1);
+	ImGui::NextColumn();
+	ImGui::PopID();
+
+	ImGui::TableNextRow();
+}
+
+// Adds a read only property to a property list
+void GuiPropertyRO(std::string label, std::string prop) {
+
+	constexpr auto leaf_node_flags = ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen | ImGuiTreeNodeFlags_Bullet;
+
+	ImGui::PushID(label.c_str());
+	ImGui::TableSetColumnIndex(0);
+	ImGui::AlignTextToFramePadding();
+
+	ImGui::TreeNodeEx(label.c_str(), leaf_node_flags, label.c_str());
+
+	ImGui::TableSetColumnIndex(1);
+	ImGui::SetNextItemWidth(-FLT_MIN);
+
+	ImGui::Text(prop.c_str());
+	ImGui::NextColumn();
+	ImGui::PopID();
+
+	ImGui::TableNextRow();
 }
 
 void Shader::render_gui_segment() {
@@ -67,8 +178,9 @@ void Shader::render_gui_segment() {
 	ImGui::TableNextRow();
 	ImGui::TableSetColumnIndex(0);
 
-	//bool node_open = ImGui::TreeNode("Object", "%s_%u", prefix, uid);
-	bool node_open = ImGui::TreeNode(this, filename.c_str());
+
+	bool open = ImGui::TreeNode("Shader", name.c_str());
+
 	if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_None)) {
 		Shader* shader = this;
 		ImGui::SetDragDropPayload("SHADER", &shader, sizeof(Shader*));
@@ -76,41 +188,28 @@ void Shader::render_gui_segment() {
 		ImGui::EndDragDropSource();
 	}
 
-	if (node_open) {
 
+	ImGui::AlignTextToFramePadding();
+
+	if (open) {
 		ImGui::TableNextRow();
-		ImGui::TableSetColumnIndex(0);
 
-		ImGui::Text("Filename:");
-		ImGui::TableNextColumn();
-		ImGui::Text(filename.c_str());
-
-		ImGui::TableNextRow();
-		ImGui::TableSetColumnIndex(0);
-
-
-		ImGui::Text("Type:");
-		ImGui::TableNextColumn();
-		ImGui::Text(TypeNames.at(type).c_str());
-
-
-		ImGui::TableNextRow();
-		ImGui::TableSetColumnIndex(0);
-
-		ImGui::Text("Compiled:");
-		ImGui::TableNextColumn();
-		ImGui::Text(compiled ? "True" : "False");
+		GuiProperty("Name", name);
+		GuiProperty("Filename", filename);
+		GuiProperty("Type", type);
+		GuiPropertyRO("Compiled", compiled ? "True" : "False");
 
 
 		ImGui::TableNextRow();
 		ImGui::TableSetColumnIndex(1);
 
 
-		if (ImGui::Button("Info Log")) show_info_log = true;
+		if (ImGui::Button("Info Log")) {
+			show_info_log = true;
+		}
 
 		ImGui::TreePop();
 	}
-
 
 	ImGui::PopID();
 }
@@ -120,6 +219,7 @@ void Shader::show_shaders_gui(bool& show) {
 
 	// Main shaders window
 	if (show && ImGui::Begin("Shaders", &show)) {
+		
 		// First, show the table of existing shaders
 		if (ImGui::BeginTable("split", 2, ImGuiTableFlags_BordersOuter | ImGuiTableFlags_Resizable)) {
 
@@ -136,6 +236,13 @@ void Shader::show_shaders_gui(bool& show) {
 		}
 
 		ImGui::End();
+	}
+
+	//Now, show the info logs, if open
+	for (auto& shader : shaders) {
+		if (shader->show_info_log) {
+			shader->render_info_log();
+		}
 	}
 
 	if (show_create_shader_window && ImGui::Begin("Create Shader", &show_create_shader_window)) {
@@ -185,16 +292,16 @@ Program::Program() {
 	name = "Untitled Program";
 	programs.push_back(this);
 	vertex_shader = nullptr;
+	fragment_shader = nullptr;
 }
 
 
-void Program::link(std::vector<Shader>& shaders) {
-	std::copy(shaders.begin(), shaders.end(), std::back_inserter(this->shaders));
+void Program::link() {
 	program_id = glCreateProgram();
 
-	for (auto& shader : shaders) {
-		glAttachShader(program_id, shader.shader_id);
-	}
+	if (fragment_shader) glAttachShader(program_id, fragment_shader->shader_id);
+	if (vertex_shader) glAttachShader(program_id, vertex_shader->shader_id);
+
 
 	glLinkProgram(program_id);
 
@@ -207,10 +314,126 @@ void Program::link(std::vector<Shader>& shaders) {
 	glGetProgramiv(program_id, GL_INFO_LOG_LENGTH, &log_length);
 	info_log.resize(log_length);
 	glGetShaderInfoLog(program_id, log_length, &log_length, &info_log[0]);
+
+	if (linked) {
+		// Query the program for its uniforms
+		int num_active_uniforms = 0;
+		glGetProgramiv(program_id, GL_ACTIVE_UNIFORMS, &num_active_uniforms);
+
+		float_uniform_values.resize(num_active_uniforms);
+
+		for (int i = 0; i < num_active_uniforms; i++) {
+			char uniform_name[1024];
+			int length;
+			uint32_t uniform_type;
+			int uniform_size;
+
+			glGetActiveUniform(program_id, i, 1024, &length, &uniform_size, &uniform_type, uniform_name);
+
+			switch (uniform_type) {
+			case GL_FLOAT:
+				float_uniforms.push_back(uniform_name);
+
+			}
+		}
+		printf("%d\n", num_active_uniforms);
+	}
 }
 
-
 void Program::render_gui_segment() {
+	ImGui::PushID(this);
+
+	ImGui::TableNextRow();
+	ImGui::TableSetColumnIndex(0);
+
+
+	bool open = ImGui::TreeNode("Program", name.c_str());
+
+	ImGui::AlignTextToFramePadding();
+
+	if (open) {
+		ImGui::TableNextRow();
+
+		GuiProperty("Name", name);
+		GuiPropertyRO("Linked", linked ? "True" : "False");
+
+
+		ImGui::TableNextRow();
+		ImGui::TableSetColumnIndex(1);
+
+		ImGui::TableNextRow();
+		ImGui::TableSetColumnIndex(0);
+
+		ImGui::Text("Vertex Shader");
+
+		if (ImGui::BeginDragDropTarget()) {
+			if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("SHADER")) {
+				vertex_shader = *(Shader**)payload->Data;
+			}
+
+			ImGui::EndDragDropTarget();
+		}
+		ImGui::TableNextColumn();
+
+
+		ImGui::Text(vertex_shader ? vertex_shader->name.c_str() : "");
+
+
+		ImGui::TableNextRow();
+		ImGui::TableSetColumnIndex(0);
+
+		ImGui::Text("Fragment Shader");
+
+		if (ImGui::BeginDragDropTarget()) {
+			if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("SHADER")) {
+				fragment_shader = *(Shader**)payload->Data;
+			}
+
+			ImGui::EndDragDropTarget();
+		}
+		ImGui::TableNextColumn();
+
+
+		ImGui::Text(fragment_shader ? fragment_shader->name.c_str() : "");
+
+		ImGui::TableNextRow();
+		ImGui::TableSetColumnIndex(0);
+
+		if (ImGui::TreeNode("Uniform", "Uniforms")) {
+			ImGui::TableNextRow();
+			ImGui::TableSetColumnIndex(0);
+
+			for (int i = 0; i < float_uniforms.size(); i++) {
+				GuiProperty(float_uniforms[i], float_uniform_values[i]);
+			}
+
+			ImGui::TreePop();
+		}
+
+
+
+		ImGui::TableNextRow();
+		ImGui::TableSetColumnIndex(1);
+
+		if (ImGui::Button("Link"))
+			link();
+
+
+		if (ImGui::Button("Info Log")) {
+			show_info_log = true;
+		}
+
+
+
+		ImGui::TreePop();
+	}
+
+	ImGui::PopID();
+}
+/*
+void Program::render_gui_segment() {
+	ImGui::PushID(this);
+
 	if (ImGui::CollapsingHeader(name.c_str(), ImGuiTreeNodeFlags_DefaultOpen)) {
 		ImGui::Text("Linked: %s", linked ? "True" : "False");
 
@@ -230,25 +453,55 @@ void Program::render_gui_segment() {
 			ImGui::TableNextColumn();
 
 			
-			ImGui::Text(vertex_shader ? vertex_shader->filename.c_str() : "");
+			ImGui::Text(vertex_shader ? vertex_shader->name.c_str() : "");
 			
 
+			ImGui::TableNextRow();
+			ImGui::TableSetColumnIndex(0);
+
+			ImGui::Text("Fragment Shader");
+
+			if (ImGui::BeginDragDropTarget()) {
+				if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("SHADER")) {
+					fragment_shader = *(Shader**)payload->Data;
+				}
+
+				ImGui::EndDragDropTarget();
+			}
+			ImGui::TableNextColumn();
 
 
+			ImGui::Text(fragment_shader ? fragment_shader->name.c_str() : "");
+
+			ImGui::TableNextRow();
+			ImGui::TableSetColumnIndex(0);
+
+			bool open = ImGui::TreeNode("Uniform", "Uniforms");
+
+			
+
+			ImGui::TableNextRow();
+			ImGui::TableSetColumnIndex(1);
+
+			if (ImGui::Button("Link"))
+				link();
 
 			ImGui::EndTable();
 		}
 	}
 
-	for (auto& shader : shaders) {
-		shader.render_info_log();
-	}
-}
+	ImGui::PopID();
+}*/
 
 void Program::show_programs_gui(bool& show) {
 	if (ImGui::Begin("Programs", &show)) {
-		for (auto& program : programs) {
-			program->render_gui_segment();
+		if (ImGui::BeginTable("split", 2, ImGuiTableFlags_BordersOuter | ImGuiTableFlags_Resizable)) {
+
+			for (auto& program : programs) {
+				program->render_gui_segment();
+			}
+
+			ImGui::EndTable();
 		}
 
 		
