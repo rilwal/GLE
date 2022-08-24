@@ -33,6 +33,7 @@ int main() {
 	glfwMakeContextCurrent(window);
 	gladLoadGL(glfwGetProcAddress);
 
+	glEnable(GL_DEPTH_TEST);
 
 	Shader s, t, blue;
 	s.load_from_file("test.frag", Shader::Type::FRAGMENT);
@@ -67,12 +68,13 @@ int main() {
 	glGenVertexArrays(1, &vao);
 	glBindVertexArray(vao);
 	glEnableVertexAttribArray(0);
+	glEnableVertexAttribArray(1);
 
 	glGenBuffers(1, &vbo);
 	glBindBuffer(GL_ARRAY_BUFFER, vbo);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec4) * m.vertices.size() + sizeof(glm::vec3) * m.normals.size(), nullptr, GL_STATIC_DRAW);
 	glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(glm::vec4) * m.vertices.size(), &m.vertices[0][0]);
-	glBufferSubData(GL_ARRAY_BUFFER, sizeof(glm::vec4) * m.vertices.size(), sizeof(glm::vec3) * m.normals.size(), &m.normals[0][0]);
+	glBufferSubData(GL_ARRAY_BUFFER, sizeof(glm::vec4) * m.vertices.size(), sizeof(glm::vec3) * m.normals.size(), &m.normals[0].x);
 
 
 	glVertexAttribPointer(0, 4, GL_FLOAT, 0, 0, 0); // vertex positions tightly packed
@@ -84,8 +86,8 @@ int main() {
 
 	glm::mat4 mvp = projection * view;
 
-	for (auto& uniform : p.uniforms) {
-		if (uniform.name == "mvp")
+	for (auto& [name, uniform] : p.uniforms) {
+		if (name == "mvp")
 			uniform.value.m4 = mvp;
 	}
 
@@ -112,7 +114,7 @@ int main() {
 		glfwGetFramebufferSize(window, &display_w, &display_h);
 		glViewport(0, 0, display_w, display_h);
 		glClearColor(0, 0, 0, 1);
-		glClear(GL_COLOR_BUFFER_BIT);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 
 		// More rendering test code

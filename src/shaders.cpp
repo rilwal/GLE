@@ -229,8 +229,9 @@ void Program::link() {
 		// Query the program for its uniforms
 		int num_active_uniforms = 0;
 		glGetProgramiv(program_id, GL_ACTIVE_UNIFORMS, &num_active_uniforms);
+		
+		std::map<std::string, Uniform> _uniforms;
 
-		uniforms.resize(num_active_uniforms);
 
 		for (int i = 0; i < num_active_uniforms; i++) {
 			char uniform_name[1024];
@@ -247,6 +248,8 @@ void Program::link() {
 			switch (uniform_type) {
 			case GL_FLOAT:
 				u.type = Uniform::Type::Float;
+
+				
 				glGetUniformfv(program_id, i, &u.value.f);
 				break;
 			case GL_FLOAT_VEC3:
@@ -267,8 +270,15 @@ void Program::link() {
 				break;
 			}
 
-			uniforms[i] = u;
+			// persist uniform values across reloads
+			if (uniforms.contains(u.name) && uniforms[u.name].type == u.type) {
+				u.value.m4 = uniforms[u.name].value.m4;
+			}
+
+			_uniforms[u.name] = u;
 		}
+
+		uniforms = _uniforms;
 	}
 }
 
@@ -291,7 +301,7 @@ void Program::render_gui_segment() {
 			ImGui::TableNextRow();
 			ImGui::TableSetColumnIndex(0);
 
-			for (auto& uniform : uniforms) {
+			for (auto& [name, uniform] : uniforms) {
 				if (uniform.show_in_ui) {
 					switch (uniform.type) {
 					case Uniform::Type::Float:
@@ -353,7 +363,7 @@ void Program::use() {
 
 	glUseProgram(program_id);
 
-	for (auto& uniform : uniforms) {
+	for (auto& [name, uniform] : uniforms) {
 		switch (uniform.type) {
 		case Uniform::Type::Float:
 			glUniform1f(uniform.location, uniform.value.f);

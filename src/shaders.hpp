@@ -76,7 +76,9 @@ struct Program {
 		Type type;
 	};
 	
-	std::vector<Uniform> uniforms;
+	std::map<std::string, Uniform> uniforms;
+	//std::vector<Uniform> uniforms;
+
 
 	bool linked = false;
 	bool show_info_log = false;
