@@ -67,6 +67,7 @@ struct Program {
 		} value;
 
 		std::string name;
+		int location;
 		Type type;
 	};
 	
@@ -98,5 +99,8 @@ struct Program {
 
 	void render_gui_segment();
 	void link();
+
+	// Make this the active shader
+	void use();
 };
 

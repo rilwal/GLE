@@ -31,14 +31,16 @@ int main() {
 	gladLoadGL(glfwGetProcAddress);
 
 
-	Shader s, t;
+	Shader s, t, blue;
 	s.load_from_file("test.frag", Shader::Type::FRAGMENT);
 	t.load_from_file("test.vert", Shader::Type::VERTEX);
 
+	blue.load_from_file("blue.frag", Shader::Type::FRAGMENT);
+	blue.name = "Blue";
 
 	Program p;
-	p.vertex_shader = &s;
-	p.fragment_shader = &t;
+	p.vertex_shader = &t;
+	p.fragment_shader = &s;
 	p.link();
 
 	IMGUI_CHECKVERSION();
@@ -97,24 +99,7 @@ int main() {
 
 		// More rendering test code
 		if (p.linked) {
-			glUseProgram(p.program_id);
-			for (int i = 0; i < p.float_uniforms.size(); i++) {
-				glUniform1f(glGetUniformLocation(p.program_id, p.float_uniforms[i].c_str()), p.float_uniform_values[i]);
-
-			}
-
-			for (auto& uniform : p.uniforms) {
-				switch (uniform.type) {
-				case Program::Uniform::Type::Float:
-					glUniform1f(glGetUniformLocation(p.program_id, uniform.name.c_str()), uniform.value.f);
-					break;
-
-				case Program::Uniform::Type::Vec3:
-					glUniform3f(glGetUniformLocation(p.program_id, uniform.name.c_str()), uniform.value.v3.x, uniform.value.v3.y, uniform.value.v3.z);
-					break;
-				}
-			}
-
+			p.use();
 			glDrawElements(GL_TRIANGLES, m.indices.size(), GL_UNSIGNED_INT, &m.indices[0]);
 		}
 

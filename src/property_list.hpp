@@ -52,12 +52,13 @@ namespace ImGui {
 
 		bool open = ImGui::TreeNode(name.c_str(), name.c_str());
 		ImGui::AlignTextToFramePadding();
+
 		return open;
 
 	}
 
 	inline void EndPropListEntry() {
-		ImGui::PopID();
+		ImGui::TreePop();
 	}
 
 	// A string property for PropList

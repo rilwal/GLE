@@ -72,10 +72,6 @@ void Shader::load_from_file(std::string filename, Shader::Type type) {
 }
 
 
-
-
-
-
 void Shader::render_gui_segment() {
 	ImGui::PushID(this);
 
@@ -91,6 +87,8 @@ void Shader::render_gui_segment() {
 		ImGui::Text(filename.c_str());
 		ImGui::EndDragDropSource();
 	}
+
+	ImGui::TableNextRow();
 
 
 	if (open) {
@@ -206,6 +204,9 @@ void Program::link() {
 
 	glLinkProgram(program_id);
 
+	if (fragment_shader) glDetachShader(program_id, fragment_shader->shader_id);
+	if (vertex_shader) glDetachShader(program_id, vertex_shader->shader_id);
+
 	GLint _linked;
 	glGetProgramiv(program_id, GL_LINK_STATUS, &_linked);
 
@@ -221,7 +222,7 @@ void Program::link() {
 		int num_active_uniforms = 0;
 		glGetProgramiv(program_id, GL_ACTIVE_UNIFORMS, &num_active_uniforms);
 
-		float_uniform_values.resize(num_active_uniforms);
+		uniforms.resize(num_active_uniforms);
 
 		for (int i = 0; i < num_active_uniforms; i++) {
 			char uniform_name[1024];
@@ -231,6 +232,7 @@ void Program::link() {
 
 			glGetActiveUniform(program_id, i, 1024, &length, &uniform_size, &uniform_type, uniform_name);
 			Uniform u;
+			u.location = i;
 			u.name = uniform_name;
 
 			switch (uniform_type) {
@@ -244,7 +246,7 @@ void Program::link() {
 				break;
 			}
 
-			uniforms.push_back(u);
+			uniforms[i] = u;
 		}
 		printf("%d\n", num_active_uniforms);
 	}
@@ -313,5 +315,22 @@ void Program::show_programs_gui(bool& show) {
 
 		
 		ImGui::End();
+	}
+}
+
+void Program::use() {
+
+	glUseProgram(program_id);
+
+	for (auto& uniform : uniforms) {
+		switch (uniform.type) {
+		case Program::Uniform::Type::Float:
+			glUniform1f(uniform.location, uniform.value.f);
+			break;
+
+		case Program::Uniform::Type::Vec3:
+			glUniform3f(uniform.location, uniform.value.v3.x, uniform.value.v3.y, uniform.value.v3.z);
+			break;
+		}
 	}
 }
