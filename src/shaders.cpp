@@ -494,7 +494,7 @@ void Program::render_gui_segment() {
 }*/
 
 void Program::show_programs_gui(bool& show) {
-	if (ImGui::Begin("Programs", &show)) {
+	if (show && ImGui::Begin("Programs", &show)) {
 		if (ImGui::BeginTable("split", 2, ImGuiTableFlags_BordersOuter | ImGuiTableFlags_Resizable)) {
 
 			for (auto& program : programs) {

@@ -8,7 +8,9 @@
 #undef GLAD_GL_IMPLEMENTATION
 
 #include <GLFW/glfw3.h>
+
 #include "shaders.hpp"
+#include "model.hpp"
 
 const char* glsl_version = "#version 440";
 
@@ -35,6 +37,9 @@ int main() {
 
 
 	Program p;
+	p.vertex_shader = &s;
+	p.fragment_shader = &t;
+	p.link();
 
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
@@ -48,9 +53,26 @@ int main() {
 	ImGui_ImplOpenGL3_Init(glsl_version);
 
 
+	// Temporary test code to try and create and render a model
+	Model m;
+	m.vertices = { {0, .5, 0, 1}, {.5, -.5, 0, 1}, {-.5, -.5, 0, 1} };
+	m.indices = { 0, 1, 2 };
+
+	uint32_t vao, vbo;
+	glGenVertexArrays(1, &vao);
+	glBindVertexArray(vao);
+	glEnableVertexAttribArray(0);
+
+	glGenBuffers(1, &vbo);
+	glBindBuffer(GL_ARRAY_BUFFER, vbo);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec4) * m.vertices.size(), &m.vertices[0], GL_STATIC_DRAW);
+
+	glVertexAttribPointer(0, 4, GL_FLOAT, 0, 0, 0); // vertex positions tightly packed
+
+
 	while (!glfwWindowShouldClose(window)) {
 		glfwPollEvents();
-		
+
 		ImGui_ImplOpenGL3_NewFrame();
 		ImGui_ImplGlfw_NewFrame();
 		ImGui::NewFrame();
@@ -59,21 +81,31 @@ int main() {
 		ImGui::ShowDemoWindow();
 
 		static bool show_shader_window = true;
-		
-		Shader::show_shaders_gui(show_shader_window);
-
 		static bool show_program_window = true;
-		if (show_program_window) {
-			Program::show_programs_gui(show_program_window);
-		}
+
+		Shader::show_shaders_gui(show_shader_window);
+		Program::show_programs_gui(show_program_window);
+
+
 
 		ImGui::Render();
 		glfwGetFramebufferSize(window, &display_w, &display_h);
 		glViewport(0, 0, display_w, display_h);
 		glClearColor(0, 0, 0, 1);
 		glClear(GL_COLOR_BUFFER_BIT);
-		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
+
+		// More rendering test code
+		if (p.linked) {
+			glUseProgram(p.program_id);
+			for (int i = 0; i < p.float_uniforms.size(); i++) {
+				glUniform1f(glGetUniformLocation(p.program_id, p.float_uniforms[i].c_str()), p.float_uniform_values[i]);
+
+			}
+			glDrawElements(GL_TRIANGLES, m.indices.size(), GL_UNSIGNED_INT, &m.indices[0]);
+		}
+
+		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
 		glfwSwapBuffers(window);
 	}

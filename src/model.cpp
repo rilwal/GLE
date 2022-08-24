@@ -75,6 +75,10 @@ void Model::load_from_obj(std::string filename) {
 			it++;
 			if (*it == ' ') {
 				// Vertex
+				// Format is:
+				// v {x} {y} {z} {w}
+				// w is optional
+
 				float x, y, z, w;
 
 				skip_whitespace(it);
@@ -93,6 +97,8 @@ void Model::load_from_obj(std::string filename) {
 			}
 			else if (*it == 'n') {
 				// Normal
+				// Format:
+				// vn {x} {y} {z}
 				it++;
 				float x, y, z;
 
@@ -106,7 +112,11 @@ void Model::load_from_obj(std::string filename) {
 				normals.push_back({ x, y, z });
 			}
 			else if (*it == 't') {
-				// Texture
+				// Texture UV
+				// Format
+				// vt {u} {v}
+				// TODO: support the proper format vt {u} [{v} {w}]
+
 				it++;
 				float u, v;
 
@@ -120,6 +130,12 @@ void Model::load_from_obj(std::string filename) {
 		}
 		else if (*it == 'f') {
 			// Faces
+			// Format:
+			// f {v}[/{t}[/{n}]]
+			// Where:
+			//   v is the index of the vertex to render
+			//   t is the index of the texture coordinate
+			//   n is the index of the vertex normal
 			it++;
 			size_t v = 0, t = 0, n = 0;
 
@@ -138,7 +154,7 @@ void Model::load_from_obj(std::string filename) {
 				indices.push_back(v);
 			}
 		}
-		else if (*it == '#') {}
+		else if (*it == '#') {} // do nothing for comments
 		else {
 			// Unsupported lines
 			printf("Unsupported Line: ");
