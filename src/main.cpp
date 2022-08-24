@@ -102,6 +102,19 @@ int main() {
 				glUniform1f(glGetUniformLocation(p.program_id, p.float_uniforms[i].c_str()), p.float_uniform_values[i]);
 
 			}
+
+			for (auto& uniform : p.uniforms) {
+				switch (uniform.type) {
+				case Program::Uniform::Type::Float:
+					glUniform1f(glGetUniformLocation(p.program_id, uniform.name.c_str()), uniform.value.f);
+					break;
+
+				case Program::Uniform::Type::Vec3:
+					glUniform3f(glGetUniformLocation(p.program_id, uniform.name.c_str()), uniform.value.v3.x, uniform.value.v3.y, uniform.value.v3.z);
+					break;
+				}
+			}
+
 			glDrawElements(GL_TRIANGLES, m.indices.size(), GL_UNSIGNED_INT, &m.indices[0]);
 		}
 

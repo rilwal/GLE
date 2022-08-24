@@ -59,5 +59,8 @@
     <ClInclude Include="..\src\model.hpp">
       <Filter>Source Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\src\property_list.hpp">
+      <Filter>Source Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
