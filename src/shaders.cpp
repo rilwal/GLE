@@ -238,11 +238,11 @@ void Program::link() {
 			switch (uniform_type) {
 			case GL_FLOAT:
 				u.type = Uniform::Type::Float;
-				u.value.f = 1.0;
+				glGetUniformfv(program_id, i, &u.value.f);
 				break;
 			case GL_FLOAT_VEC3:
 				u.type = Uniform::Type::Vec3;
-				u.value.v3 = { 1.0, 1.0, 1.0 };
+				glGetUniformfv(program_id, i, &u.value.f);
 				break;
 			}
 
