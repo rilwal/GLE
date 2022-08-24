@@ -1,6 +1,9 @@
 
 #include "model.hpp"
 
+#include <map>
+#include <tuple>
+
 inline void skip_to_newline(const char*& it) {
 	// Skip until the character following the next newline character
 	while (*it != '\n') it++;
@@ -67,6 +70,9 @@ void Model::load_from_obj(std::string filename) {
 	fread(data, file_size, 1, f);
 	fclose(f);
 	data[file_size] = 0;
+
+	// Temporary index vector, tuple goes Vertex, UV, Normal
+	std::vector<std::tuple<int, int, int>> _indices;
 
 	// Iterate over data, parsing as we go
 	const char* it = data;
@@ -151,7 +157,7 @@ void Model::load_from_obj(std::string filename) {
 					}
 				}
 
-				indices.push_back(v);
+				_indices.push_back({ v - 1, t - 1, n - 1 });
 			}
 		}
 		else if (*it == '#') {} // do nothing for comments
@@ -161,8 +167,39 @@ void Model::load_from_obj(std::string filename) {
 			while (*it != '\n') putchar(*it++);
 			putchar('\n');
 		}
+		skip_to_newline(it);
+
 	}
-	skip_to_newline(it);
 
 	delete[] data;
+
+	// Now it's time to make this into a format that makes sense for modern OpenGL
+	std::map<std::tuple<int, int, int>, int> conversion_map;
+	std::vector<glm::vec4> _vertices;
+	std::vector<glm::vec2> _uvs;
+	std::vector<glm::vec3> _normals;
+	int i = 0; // running tally
+
+	for (auto& [v, vt, vn] : _indices) {
+		int index = 0;
+		if (conversion_map.contains( { v, vt, vn })) {
+			index = conversion_map[{v, vt, vn}];
+		}
+		else {
+			index = i++;
+			conversion_map[{v, vt, vn}] = index;
+			if (v != -1)	//should never be -1
+				_vertices.push_back(vertices[v]);
+			if (vt != -1)
+				_uvs.push_back(uvs[vt]);
+			if (vn != -1)
+			_normals.push_back(normals[vn]);
+		}
+
+		indices.push_back(index);
+	}
+
+	vertices = _vertices;
+	normals = _normals;
+	uvs = _uvs;
 }

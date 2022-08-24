@@ -269,5 +269,52 @@ namespace ImGui {
 		ImGui::PopID();
 		ImGui::TableNextRow();
 	}
+
+	// A Mat4 entry
+	inline void PLProp(std::string label, glm::mat4& prop) {
+		ImGui::TableSetColumnIndex(0);
+		ImGui::AlignTextToFramePadding();
+
+		ImGui::TreeNodeEx(label.c_str(), leaf_node_flags, label.c_str());
+
+		ImGui::TableSetColumnIndex(1);
+
+		ImGui::PushID(&prop);
+
+		ImGui::PushID("row_0");
+		ImGui::SetNextItemWidth(-FLT_MIN);
+		ImGui::DragFloat4("", &prop[0][0], .1);
+		ImGui::PopID();
+
+		ImGui::TableNextRow();
+		ImGui::TableSetColumnIndex(1);
+
+		ImGui::PushID("row_1");
+		ImGui::SetNextItemWidth(-FLT_MIN);
+		ImGui::DragFloat4("", &prop[1][0], .1);
+		ImGui::PopID();
+
+		ImGui::TableNextRow();
+		ImGui::TableSetColumnIndex(1);
+
+		ImGui::PushID("row_2");
+		ImGui::SetNextItemWidth(-FLT_MIN);
+		ImGui::DragFloat4("", &prop[2][0], .1);
+		ImGui::PopID();
+
+		ImGui::TableNextRow();
+		ImGui::TableSetColumnIndex(1);
+
+		ImGui::PushID("row_3");
+		ImGui::SetNextItemWidth(-FLT_MIN);
+		ImGui::DragFloat4("", &prop[3][0], .1);
+		ImGui::PopID();
+
+		ImGui::PopID();
+
+
+		ImGui::NextColumn();
+		ImGui::TableNextRow();
+	}
 }
 

@@ -6,6 +6,9 @@
 
 #include <cstdio>
 
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+
 #include <imgui.h>
 #include <misc/cpp/imgui_stdlib.h>
 
@@ -19,6 +22,7 @@ std::vector<Program*> programs;
 Shader::Shader() {
 	shaders.push_back(this);
 }
+
 
 void Shader::load_from_file(std::string filename, Shader::Type type) {
 	FILE* file;
@@ -102,6 +106,9 @@ void Shader::render_gui_segment() {
 		ImGui::TableNextRow();
 		ImGui::TableSetColumnIndex(1);
 
+		if (ImGui::Button("Reload")) {
+			load_from_file(filename, type);
+		}
 
 		if (ImGui::Button("Info Log")) {
 			show_info_log = true;
@@ -174,6 +181,7 @@ void Shader::show_shaders_gui(bool& show) {
 	}
 }
 
+
 void Shader::render_info_log() {
 	if (show_info_log) {
 		char title[1024];
@@ -234,6 +242,7 @@ void Program::link() {
 			Uniform u;
 			u.location = i;
 			u.name = uniform_name;
+			u.show_in_ui = !u.name.starts_with("_");
 
 			switch (uniform_type) {
 			case GL_FLOAT:
@@ -246,9 +255,15 @@ void Program::link() {
 					u.type = Uniform::Type::Color3;
 					u.name = u.name.substr(2);
 				}
-				else
+				else {
 					u.type = Uniform::Type::Vec3;
+				}
+
 				glGetUniformfv(program_id, i, &u.value.f);
+				break;
+			case GL_FLOAT_MAT4:
+				u.value.m4 = glm::identity<glm::mat4>();
+				u.type = Uniform::Type::Mat4;
 				break;
 			}
 
@@ -256,6 +271,7 @@ void Program::link() {
 		}
 	}
 }
+
 
 void Program::render_gui_segment() {
 	ImGui::PushID(this);
@@ -276,18 +292,24 @@ void Program::render_gui_segment() {
 			ImGui::TableSetColumnIndex(0);
 
 			for (auto& uniform : uniforms) {
-				switch (uniform.type) {
-				case Uniform::Type::Float:
-					ImGui::PLProp(uniform.name, uniform.value.f);
-					break;
+				if (uniform.show_in_ui) {
+					switch (uniform.type) {
+					case Uniform::Type::Float:
+						ImGui::PLProp(uniform.name, uniform.value.f);
+						break;
 
-				case Uniform::Type::Vec3:
-					ImGui::PLProp(uniform.name, uniform.value.v3);
-					break;
+					case Uniform::Type::Vec3:
+						ImGui::PLProp(uniform.name, uniform.value.v3);
+						break;
 
-				case Uniform::Type::Color3:
-					ImGui::PLColor(uniform.name, uniform.value.v3);
-					break;
+					case Uniform::Type::Color3:
+						ImGui::PLColor(uniform.name, uniform.value.v3);
+						break;
+
+					case Uniform::Type::Mat4:
+						ImGui::PLProp(uniform.name, uniform.value.m4);
+						break;
+					}
 				}
 			}
 
@@ -333,13 +355,17 @@ void Program::use() {
 
 	for (auto& uniform : uniforms) {
 		switch (uniform.type) {
-		case Program::Uniform::Type::Float:
+		case Uniform::Type::Float:
 			glUniform1f(uniform.location, uniform.value.f);
 			break;
 
 		case Uniform::Type::Color3:
-		case Program::Uniform::Type::Vec3:
+		case Uniform::Type::Vec3:
 			glUniform3f(uniform.location, uniform.value.v3.x, uniform.value.v3.y, uniform.value.v3.z);
+			break;
+
+		case Uniform::Type::Mat4:
+			glUniformMatrix4fv(uniform.location, 1, false, &uniform.value.m4[0][0]);
 			break;
 		}
 	}

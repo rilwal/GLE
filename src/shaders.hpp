@@ -55,21 +55,24 @@ struct Program {
 			Vec3,
 			Color3,
 			Vec4,
-			Color4
+			Color4,
+			Mat4
 		};
 
 		// Because a uniform can have many values, we can use a union here
-		// This approach is simple, but can lead to errors at times
+		// This approach is simple, but can lead to errors at times so care is needed
 		union {
 			float f;
 			int i;
 			glm::vec2 v2;
 			glm::vec3 v3;
 			glm::vec4 v4;
+			glm::mat4 m4;
 		} value;
 
 		std::string name;
 		int location;
+		bool show_in_ui;
 		Type type;
 	};
 	

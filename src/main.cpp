@@ -7,6 +7,9 @@
 #include <glad/gl.h>
 #undef GLAD_GL_IMPLEMENTATION
 
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+
 #include <GLFW/glfw3.h>
 
 #include "shaders.hpp"
@@ -57,8 +60,8 @@ int main() {
 
 	// Temporary test code to try and create and render a model
 	Model m;
-	m.vertices = { {0, .5, 0, 1}, {.5, -.5, 0, 1}, {-.5, -.5, 0, 1} };
-	m.indices = { 0, 1, 2 };
+	m.load_from_obj("train.obj");
+
 
 	uint32_t vao, vbo;
 	glGenVertexArrays(1, &vao);
@@ -67,9 +70,24 @@ int main() {
 
 	glGenBuffers(1, &vbo);
 	glBindBuffer(GL_ARRAY_BUFFER, vbo);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec4) * m.vertices.size(), &m.vertices[0], GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec4) * m.vertices.size() + sizeof(glm::vec3) * m.normals.size(), nullptr, GL_STATIC_DRAW);
+	glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(glm::vec4) * m.vertices.size(), &m.vertices[0][0]);
+	glBufferSubData(GL_ARRAY_BUFFER, sizeof(glm::vec4) * m.vertices.size(), sizeof(glm::vec3) * m.normals.size(), &m.normals[0][0]);
+
 
 	glVertexAttribPointer(0, 4, GL_FLOAT, 0, 0, 0); // vertex positions tightly packed
+	glVertexAttribPointer(1, 3, GL_FLOAT, 0, 0, (void*)(sizeof(glm::vec4) * m.vertices.size())); // and normals
+
+
+	glm::mat4 projection = glm::perspective(45.f, 16.f / 9.f, 1.f, 200.f); // TODO: don't assume so much
+	glm::mat4 view = glm::lookAt(glm::vec3{ 10.f, 10.f, 10.f }, glm::vec3{ 0.f, 0.f, 0.f }, glm::vec3{ 0.f, 1.f, 0.f });
+
+	glm::mat4 mvp = projection * view;
+
+	for (auto& uniform : p.uniforms) {
+		if (uniform.name == "mvp")
+			uniform.value.m4 = mvp;
+	}
 
 
 	while (!glfwWindowShouldClose(window)) {
