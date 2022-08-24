@@ -5,6 +5,7 @@
 #include <string>
 
 #include <imgui.h>
+#include <misc/cpp/imgui_stdlib.h>
 
 #include "shaders.hpp"
 
@@ -16,7 +17,7 @@ namespace ImGui {
 
 
 	// A combo box for shader types
-	void ShaderTypeComboBox(std::string label, Shader::Type& prop) {
+	inline void ShaderTypeComboBox(std::string label, Shader::Type& prop) {
 		static std::vector<const char*> labels;
 		static std::vector<int> values;
 

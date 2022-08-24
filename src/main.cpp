@@ -14,6 +14,8 @@
 
 #include "shaders.hpp"
 #include "model.hpp"
+#include "object.hpp"
+#include "camera.hpp"
 
 const char* glsl_version = "#version 440";
 
@@ -61,9 +63,9 @@ int main() {
 
 	// Temporary test code to try and create and render a model
 	Model m;
-	m.load_from_obj("train.obj");
+	m.load_from_obj("train_subd.obj");
 
-
+	// TODO: move this into model.cpp
 	uint32_t vao, vbo;
 	glGenVertexArrays(1, &vao);
 	glBindVertexArray(vao);
@@ -80,15 +82,22 @@ int main() {
 	glVertexAttribPointer(0, 4, GL_FLOAT, 0, 0, 0); // vertex positions tightly packed
 	glVertexAttribPointer(1, 3, GL_FLOAT, 0, 0, (void*)(sizeof(glm::vec4) * m.vertices.size())); // and normals
 
-
+	// Set up a camera. For now this needs to be done manually
 	glm::mat4 projection = glm::perspective(45.f, 16.f / 9.f, 1.f, 200.f); // TODO: don't assume so much
 	glm::mat4 view = glm::lookAt(glm::vec3{ 10.f, 10.f, 10.f }, glm::vec3{ 0.f, 0.f, 0.f }, glm::vec3{ 0.f, 1.f, 0.f });
 
-	glm::mat4 mvp = projection * view;
+	glm::mat4 vp = projection * view;
+	
+	Camera c {vp};
+
+	Object train("Train");
+
+	train.model = &m;
+	train.program = &p;
 
 	for (auto& [name, uniform] : p.uniforms) {
 		if (name == "mvp")
-			uniform.value.m4 = mvp;
+			uniform.value.m4 = vp;
 	}
 
 
@@ -107,7 +116,7 @@ int main() {
 
 		Shader::show_shaders_gui(show_shader_window);
 		Program::show_programs_gui(show_program_window);
-
+		train.render_gui();
 
 
 		ImGui::Render();
@@ -117,11 +126,7 @@ int main() {
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 
-		// More rendering test code
-		if (p.linked) {
-			p.use();
-			glDrawElements(GL_TRIANGLES, m.indices.size(), GL_UNSIGNED_INT, &m.indices[0]);
-		}
+		train.render(c);
 
 		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
