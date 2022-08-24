@@ -53,7 +53,9 @@ struct Program {
 			Integer,
 			Vec2,
 			Vec3,
-			Vec4
+			Color3,
+			Vec4,
+			Color4
 		};
 
 		// Because a uniform can have many values, we can use a union here

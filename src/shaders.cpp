@@ -241,14 +241,19 @@ void Program::link() {
 				glGetUniformfv(program_id, i, &u.value.f);
 				break;
 			case GL_FLOAT_VEC3:
-				u.type = Uniform::Type::Vec3;
+				// if the name starts with c_, treat it as a color
+				if (u.name.starts_with("c_")) {
+					u.type = Uniform::Type::Color3;
+					u.name = u.name.substr(2);
+				}
+				else
+					u.type = Uniform::Type::Vec3;
 				glGetUniformfv(program_id, i, &u.value.f);
 				break;
 			}
 
 			uniforms[i] = u;
 		}
-		printf("%d\n", num_active_uniforms);
 	}
 }
 
@@ -278,6 +283,10 @@ void Program::render_gui_segment() {
 
 				case Uniform::Type::Vec3:
 					ImGui::PLProp(uniform.name, uniform.value.v3);
+					break;
+
+				case Uniform::Type::Color3:
+					ImGui::PLColor(uniform.name, uniform.value.v3);
 					break;
 				}
 			}
@@ -328,6 +337,7 @@ void Program::use() {
 			glUniform1f(uniform.location, uniform.value.f);
 			break;
 
+		case Uniform::Type::Color3:
 		case Program::Uniform::Type::Vec3:
 			glUniform3f(uniform.location, uniform.value.v3.x, uniform.value.v3.y, uniform.value.v3.z);
 			break;

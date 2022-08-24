@@ -234,8 +234,26 @@ namespace ImGui {
 	}
 
 
-	// A bool PropList entry
+	// A Vec3 entry
 	inline void PLProp(std::string label, glm::vec3& prop) {
+
+		ImGui::PushID(label.c_str());
+		ImGui::TableSetColumnIndex(0);
+		ImGui::AlignTextToFramePadding();
+
+		ImGui::TreeNodeEx(label.c_str(), leaf_node_flags, label.c_str());
+
+		ImGui::TableSetColumnIndex(1);
+		ImGui::SetNextItemWidth(-FLT_MIN);
+
+		ImGui::DragFloat3("", &prop[0], .1);
+		ImGui::NextColumn();
+		ImGui::PopID();
+		ImGui::TableNextRow();
+	}
+
+	// A color entry
+	inline void PLColor(std::string label, glm::vec3& prop) {
 
 		ImGui::PushID(label.c_str());
 		ImGui::TableSetColumnIndex(0);
