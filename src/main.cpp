@@ -25,7 +25,7 @@ int main() {
 	int display_w, display_h;
 
 	glfwInit();
-	
+
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 4);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
@@ -54,6 +54,9 @@ int main() {
 	ImGuiIO& io = ImGui::GetIO(); (void)io;
 
 	io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
+	io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+
+	//io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
 
 	ImGui::StyleColorsDark();
 
@@ -108,6 +111,7 @@ int main() {
 		ImGui_ImplGlfw_NewFrame();
 		ImGui::NewFrame();
 
+		ImGui::DockSpaceOverViewport(nullptr, ImGuiDockNodeFlags_PassthruCentralNode);
 
 		ImGui::ShowDemoWindow();
 
@@ -119,7 +123,6 @@ int main() {
 		train.render_gui();
 
 
-		ImGui::Render();
 		glfwGetFramebufferSize(window, &display_w, &display_h);
 		glViewport(0, 0, display_w, display_h);
 		glClearColor(0, 0, 0, 1);
@@ -127,7 +130,9 @@ int main() {
 
 
 		train.render(c);
-
+		ImGui::EndFrame();
+		//ImGui::UpdatePlatformWindows();
+		ImGui::Render();
 		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
 		glfwSwapBuffers(window);

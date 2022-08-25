@@ -12,7 +12,7 @@ uniform mat4 _mvp; // uniforms beginning with _ are hidden in GUI
 uniform mat4 _model;
 
 void main() {
-	vertex_position_worldspace = _model * vertex_position; // in the future, we need the model matrix here
+	vertex_position_worldspace = _model * vertex_position;
 	gl_Position = _mvp * vertex_position;
 	vertex_normal = normal;
  }
