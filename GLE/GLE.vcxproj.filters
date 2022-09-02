@@ -71,5 +71,8 @@
     <ClInclude Include="..\src\camera.hpp">
       <Filter>Source Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\src\asset_manager.hpp">
+      <Filter>Source Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

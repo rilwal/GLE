@@ -5,7 +5,8 @@
 // And associated shaders (materials?), models, etc.
 // As necessary
 
-// In the future, maybe consider using DOP style SOA rather than AOS format for this data
+// In the future, consider an ECS type setup over this.
+
 
 #include <string>
 
@@ -23,6 +24,8 @@ struct Object {
 	glm::vec3 scale;
 
 	Program* program; // TODO: create a material type that can have different uniform values for the same program
+	size_t material_id; // The index of the material in the program
+
 	Model* model;
 
 	Object(std::string name);

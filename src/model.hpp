@@ -11,5 +11,5 @@ struct Model {
 	std::vector<glm::vec2> uvs;
 	std::vector<uint32_t> indices;
 
-	void load_from_obj(std::string filename);
+	void load_from_file(std::string filename);
 };

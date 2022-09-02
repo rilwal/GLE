@@ -169,6 +169,7 @@
     <ClCompile Include="..\src\shaders.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\src\asset_manager.hpp" />
     <ClInclude Include="..\src\camera.hpp" />
     <ClInclude Include="..\src\model.hpp" />
     <ClInclude Include="..\src\object.hpp" />

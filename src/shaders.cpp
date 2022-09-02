@@ -61,6 +61,8 @@ void Shader::load_from_file(std::string filename, Shader::Type type) {
 	int32_t source_len = source.size();
 	glShaderSource(shader_id, 1, &source_cstr, &source_len);
 
+	compiled = false;
+
 	glCompileShader(shader_id);
 
 	GLint _compiled;
@@ -210,6 +212,8 @@ void Program::link() {
 	if (vertex_shader) glAttachShader(program_id, vertex_shader->shader_id);
 
 
+	linked = false;
+
 	glLinkProgram(program_id);
 
 	if (fragment_shader) glDetachShader(program_id, fragment_shader->shader_id);
@@ -279,6 +283,15 @@ void Program::link() {
 		}
 
 		uniforms = _uniforms;
+		for (auto& material : materials) {
+			material.uniforms = uniforms;
+			for (auto& [name, u] : uniforms) {
+				if (material.uniforms.contains(u.name) && material.uniforms[u.name].type == u.type) {
+					u.value.m4 = uniforms[u.name].value.m4;
+				}
+			
+			}
+		}
 	}
 }
 
@@ -380,3 +393,65 @@ void Program::use() {
 		}
 	}
 }
+
+size_t Program::create_material() {
+	Material m = {};
+	m.uniforms = uniforms;
+	m.program = this;
+
+	materials.push_back(m);
+	return materials.size() - 1;
+}
+
+
+void Material::render_gui_segment() {
+		ImGui::TableNextRow();
+		ImGui::TableSetColumnIndex(0);
+
+		for (auto& [name, uniform] : uniforms) {
+			if (uniform.show_in_ui) {
+				switch (uniform.type) {
+				case Program::Uniform::Type::Float:
+					ImGui::PLProp(uniform.name, uniform.value.f);
+					break;
+
+				case Program::Uniform::Type::Vec3:
+					ImGui::PLProp(uniform.name, uniform.value.v3);
+					break;
+
+				case Program::Uniform::Type::Color3:
+					ImGui::PLColor(uniform.name, uniform.value.v3);
+					break;
+
+				case Program::Uniform::Type::Mat4:
+					ImGui::PLProp(uniform.name, uniform.value.m4);
+					break;
+				}
+			}
+
+		}
+}
+
+
+void Material::use() {
+
+	glUseProgram(program->program_id);
+
+	for (auto& [name, uniform] : uniforms) {
+		switch (uniform.type) {
+		case Program::Uniform::Type::Float:
+			glUniform1f(uniform.location, uniform.value.f);
+			break;
+
+		case Program::Uniform::Type::Color3:
+		case Program::Uniform::Type::Vec3:
+			glUniform3f(uniform.location, uniform.value.v3.x, uniform.value.v3.y, uniform.value.v3.z);
+			break;
+
+		case Program::Uniform::Type::Mat4:
+			glUniformMatrix4fv(uniform.location, 1, false, &uniform.value.m4[0][0]);
+			break;
+		}
+	}
+}
+

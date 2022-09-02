@@ -39,7 +39,7 @@ inline int read_int(const char*& it) {
 
 
 // TODO: Rewrite this so it works with OpenGL 4 (the vertex, texture and normal indices need to be the same).
-void Model::load_from_obj(std::string filename) {
+void Model::load_from_file(std::string filename) {
 	FILE* f;
 
 #ifdef _WIN32

@@ -7,6 +7,12 @@
 #include <map>
 
 
+// Forward declarations
+struct Shader;
+struct Program;
+struct Material;
+
+
 struct Shader {
 	enum class Type {
 		VERTEX = GL_VERTEX_SHADER,
@@ -43,6 +49,7 @@ struct Shader {
 };
 
 
+
 // Represents an OpenGL shader program, consisting of multipe linked shaders
 struct Program {
 	
@@ -77,8 +84,7 @@ struct Program {
 	};
 	
 	std::map<std::string, Uniform> uniforms;
-	//std::vector<Uniform> uniforms;
-
+	std::vector<Material> materials;
 
 	bool linked = false;
 	bool show_info_log = false;
@@ -98,8 +104,6 @@ struct Program {
 	std::vector<std::string> float_uniforms;
 	std::vector<float> float_uniform_values;
 
-
-
 	static void show_programs_gui(bool& show);
 
 	Program();
@@ -108,6 +112,20 @@ struct Program {
 	void link();
 
 	// Make this the active shader
+	void use();
+
+
+	size_t create_material();
+};
+
+
+// A material is essentially a set of values for the uniforms
+// in a shader program.
+struct Material {
+	std::map<std::string, Program::Uniform> uniforms;
+	Program* program;
+
+	void render_gui_segment();
 	void use();
 };
 

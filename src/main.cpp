@@ -28,7 +28,9 @@ int main() {
 
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 4);
+	glfwWindowHint(GLFW_SAMPLES, 4);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+
 
 	GLFWwindow* window = glfwCreateWindow(1920, 1080, "GLE", nullptr, nullptr);
 
@@ -36,6 +38,7 @@ int main() {
 	gladLoadGL(glfwGetProcAddress);
 
 	glEnable(GL_DEPTH_TEST);
+	glEnable(GL_MULTISAMPLE);
 
 	Shader s, t, blue;
 	s.load_from_file("test.frag", Shader::Type::FRAGMENT);
@@ -66,7 +69,7 @@ int main() {
 
 	// Temporary test code to try and create and render a model
 	Model m;
-	m.load_from_obj("train_subd.obj");
+	m.load_from_file("train.obj");
 
 	// TODO: move this into model.cpp
 	uint32_t vao, vbo;
@@ -86,7 +89,7 @@ int main() {
 	glVertexAttribPointer(1, 3, GL_FLOAT, 0, 0, (void*)(sizeof(glm::vec4) * m.vertices.size())); // and normals
 
 	// Set up a camera. For now this needs to be done manually
-	glm::mat4 projection = glm::perspective(45.f, 16.f / 9.f, 1.f, 200.f); // TODO: don't assume so much
+	glm::mat4 projection = glm::perspective(45.f, 16.f / 9.f, 1.f, 100.f); // TODO: don't assume so much
 	glm::mat4 view = glm::lookAt(glm::vec3{ 10.f, 10.f, 10.f }, glm::vec3{ 0.f, 0.f, 0.f }, glm::vec3{ 0.f, 1.f, 0.f });
 
 	glm::mat4 vp = projection * view;
@@ -94,14 +97,15 @@ int main() {
 	Camera c {vp};
 
 	Object train("Train");
+	Object train2("Another Train");
 
 	train.model = &m;
 	train.program = &p;
+	train.material_id = p.create_material();
 
-	for (auto& [name, uniform] : p.uniforms) {
-		if (name == "mvp")
-			uniform.value.m4 = vp;
-	}
+	train2.model = &m;
+	train2.program = &p;
+	train2.material_id = p.create_material();
 
 
 	while (!glfwWindowShouldClose(window)) {
@@ -121,7 +125,7 @@ int main() {
 		Shader::show_shaders_gui(show_shader_window);
 		Program::show_programs_gui(show_program_window);
 		train.render_gui();
-
+		train2.render_gui();
 
 		glfwGetFramebufferSize(window, &display_w, &display_h);
 		glViewport(0, 0, display_w, display_h);
@@ -130,6 +134,8 @@ int main() {
 
 
 		train.render(c);
+		train2.render(c);
+		
 		ImGui::EndFrame();
 		//ImGui::UpdatePlatformWindows();
 		ImGui::Render();

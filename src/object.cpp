@@ -9,6 +9,7 @@ Object::Object(std::string name) {
 	this->name = name;
 	program = nullptr;
 	model = nullptr;
+	material_id = 0;
 
 	position = { 0, 0, 0 };
 	rotation = { 0, 0, 0 };
@@ -17,6 +18,8 @@ Object::Object(std::string name) {
 
 
 void Object::render_gui() {
+	Material& material = program->materials[material_id];
+
 	ImGui::PushID(this);
 	if (ImGui::Begin(name.c_str())) {
 		if (ImGui::BeginPropList("Train")) {
@@ -33,13 +36,12 @@ void Object::render_gui() {
 		}
 
 		if (ImGui::BeginPropListEntry("Material")) {
-			program->render_gui_segment();
+			material.render_gui_segment();
 
 			ImGui::EndPropListEntry();
 		}
 
 		ImGui::EndPropList();
-
 
 	}
 
@@ -50,6 +52,8 @@ void Object::render_gui() {
 
 
 void Object::render(Camera& c) {
+	Material& material = program->materials[material_id];
+
 	if (!program) return;
 	if (!model) return;
 
@@ -59,19 +63,22 @@ void Object::render(Camera& c) {
 
 	glm::mat4 model_matrix = translation_matrix * rotation_matrix * scale_matrix;
 
-	glm::mat4 mvp = c.vp * model_matrix;
 
-	// TODO: remember the position of these fixed matrices, rather than searching every render
-	for (auto& [name, uniform] : program->uniforms) {
-		if (name == "_mvp")
-			uniform.value.m4 = mvp;
-		if (name == "_model")
-			uniform.value.m4 = model_matrix;
+	// set up fixed name uniforms
+	if (material.uniforms.contains("_mvp")) {
+		glm::mat4 mvp = c.vp * model_matrix;
+
+		material.uniforms["_mvp"].value.m4 = mvp;
 	}
+
+	if (material.uniforms.contains("_model"))
+		material.uniforms["_model"].value.m4 = model_matrix;
+
 	
-	program->use();
+	material.use();
 	
 	// TODO: move this responsibility elsewhere
 	glDrawElements(GL_TRIANGLES, model->indices.size(), GL_UNSIGNED_INT, &model->indices[0]);
 
 }
+
