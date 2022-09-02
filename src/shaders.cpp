@@ -20,6 +20,8 @@ std::vector<Program*> programs;
 
 
 Shader::Shader() {
+	shader_id = 0;
+	type = Shader::Type::FRAGMENT;
 	shaders.push_back(this);
 }
 
@@ -405,31 +407,30 @@ size_t Program::create_material() {
 
 
 void Material::render_gui_segment() {
-		ImGui::TableNextRow();
-		ImGui::TableSetColumnIndex(0);
+	ImGui::TableNextRow();
+	ImGui::TableSetColumnIndex(0);
 
-		for (auto& [name, uniform] : uniforms) {
-			if (uniform.show_in_ui) {
-				switch (uniform.type) {
-				case Program::Uniform::Type::Float:
-					ImGui::PLProp(uniform.name, uniform.value.f);
-					break;
+	for (auto& [name, uniform] : uniforms) {
+		if (uniform.show_in_ui) {
+			switch (uniform.type) {
+			case Program::Uniform::Type::Float:
+				ImGui::PLProp(uniform.name, uniform.value.f);
+				break;
 
-				case Program::Uniform::Type::Vec3:
-					ImGui::PLProp(uniform.name, uniform.value.v3);
-					break;
+			case Program::Uniform::Type::Vec3:
+				ImGui::PLProp(uniform.name, uniform.value.v3);
+				break;
 
-				case Program::Uniform::Type::Color3:
-					ImGui::PLColor(uniform.name, uniform.value.v3);
-					break;
+			case Program::Uniform::Type::Color3:
+				ImGui::PLColor(uniform.name, uniform.value.v3);
+				break;
 
-				case Program::Uniform::Type::Mat4:
-					ImGui::PLProp(uniform.name, uniform.value.m4);
-					break;
-				}
+			case Program::Uniform::Type::Mat4:
+				ImGui::PLProp(uniform.name, uniform.value.m4);
+				break;
 			}
-
 		}
+	}
 }
 
 

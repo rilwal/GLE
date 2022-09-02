@@ -21,7 +21,6 @@ const char* glsl_version = "#version 440";
 
 
 int main() {
-
 	int display_w, display_h;
 
 	glfwInit();

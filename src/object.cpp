@@ -5,6 +5,15 @@
 #include <imgui.h>
 #include "property_list.hpp"
 
+#include <GLFW/glfw3.h>
+
+#define _USE_MATH_DEFINES
+#include <math.h>
+
+float radians(float degrees) {
+	return degrees * (M_PI / 180.f);
+}
+
 Object::Object(std::string name) {
 	this->name = name;
 	program = nullptr;
@@ -58,7 +67,7 @@ void Object::render(Camera& c) {
 	if (!model) return;
 
 	glm::mat4 translation_matrix = glm::translate(position);
-	glm::mat4 rotation_matrix = glm::rotate(glm::rotate(glm::rotate(rotation.x, glm::vec3{0, 1, 0}), rotation.y, { 1.f, 0.f, 0.f }), rotation.z, { 0.f, 0.f, 1.f });
+	glm::mat4 rotation_matrix = glm::rotate(glm::rotate(glm::rotate(radians(rotation.x), glm::vec3{1, 0, 0}), radians(rotation.y), { 0.f, 1.f, 0.f }), radians(rotation.z), { 0.f, 0.f, 1.f });
 	glm::mat4 scale_matrix = glm::scale(scale);
 
 	glm::mat4 model_matrix = translation_matrix * rotation_matrix * scale_matrix;
@@ -71,8 +80,15 @@ void Object::render(Camera& c) {
 		material.uniforms["_mvp"].value.m4 = mvp;
 	}
 
-	if (material.uniforms.contains("_model"))
+	if (material.uniforms.contains("_model")) {
 		material.uniforms["_model"].value.m4 = model_matrix;
+	}
+
+	if (material.uniforms.contains("_time")) {
+		float time = glfwGetTime();
+		material.uniforms["_time"].value.f = time;
+
+	}
 
 	
 	material.use();
