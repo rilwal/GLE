@@ -16,7 +16,7 @@ uniform mat4 _model; // _mvp and _model get the appropriate matrices automatical
 uniform float _time; // get the time
 
 void main() {
-	vec4 vp = vertex_position * vec4(1, max(abs(sin(_time + time_offset)), .5), 1, 1);
+	vec4 vp = vertex_position * vec4(1, max((sin(_time + time_offset) / 2 + 1.5) / 2, .5), 1, 1);
 	vertex_position_worldspace = _model * vp;
 	gl_Position = _mvp * vp;
 	vertex_normal = (inverse(transpose(_model)) * vec4(normal, 1)).xyz;

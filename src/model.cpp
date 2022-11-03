@@ -38,24 +38,25 @@ inline int read_int(const char*& it) {
 }
 
 
-// TODO: Rewrite this so it works with OpenGL 4 (the vertex, texture and normal indices need to be the same).
-void Model::load_from_file(std::string filename) {
+void Model::load(const char* filename) {
+	path = filename;
+
 	FILE* f;
 
 #ifdef _WIN32
 	// _s variants for windows compatibility
-	errno_t err = fopen_s(&f, filename.c_str(), "rb");
+	errno_t err = fopen_s(&f, filename, "rb");
 	if (err != 0 || f == nullptr) {
 		char message[1024];
 		strerror_s(message, err);
-		fprintf(stderr, "Failed to load model '%s': %s \n", filename.c_str(), message);
+		fprintf(stderr, "Failed to load model '%s': %s \n", filename, message);
 		return;
 	}
 
 #else
 	f = fopen(filename.c_str(), "rb");
 	if (f == nullptr) {
-		fprintf(stderr, "Failed to load model '%s': %s \n", filename.c_str(), strerror(errno));
+		fprintf(stderr, "Failed to load model '%s': %s \n", filename, strerror(errno));
 		return;
 	}
 #endif
@@ -202,4 +203,46 @@ void Model::load_from_file(std::string filename) {
 	vertices = _vertices;
 	normals = _normals;
 	uvs = _uvs;
+
+	bool has_norm = normals.size() != 0;
+	bool has_uvs = uvs.size() != 0;
+
+	size_t stride = sizeof(glm::vec4);
+	if (has_norm) stride += sizeof(glm::vec3);
+	if (has_uvs)  stride += sizeof(glm::vec2);
+
+	gl_data.resize(stride* vertices.size());
+	for (size_t i = 0; i < vertices.size(); i++) {
+		size_t offset = 0;
+		memcpy(&gl_data[i * stride + offset], &vertices[i], sizeof(glm::vec4));
+		offset += sizeof(glm::vec4);
+
+		if (has_norm) {
+			memcpy(&gl_data[i * stride + offset], &normals[i], sizeof(glm::vec3));
+			offset += sizeof(glm::vec3);
+		}
+
+		if (has_uvs) {
+			memcpy(&gl_data[i * stride + offset], &uvs[i], sizeof(glm::vec2));
+			offset += sizeof(glm::vec2);
+		}
+
+	}
+
+	if (has_norm && has_uvs)
+		layout = { {"vertex_pos", ShaderDataType::Vec4}, { "normal", ShaderDataType::Vec3 }, {"uv", ShaderDataType::Vec2} };
+	else if (has_norm)
+		layout = { {"vertex_pos", ShaderDataType::Vec4}, { "normal", ShaderDataType::Vec3 } };
+	else if (has_uvs)
+		layout = { {"vertex_pos", ShaderDataType::Vec4}, { "uv", ShaderDataType::Vec2 } };
+	else
+		layout = { {"vertex_pos", ShaderDataType::Vec4} };
+
+}
+
+void Model::unload() {
+	vertices.clear();
+	normals.clear();
+	uvs.clear();
+	indices.clear();
 }

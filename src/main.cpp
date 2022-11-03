@@ -17,16 +17,20 @@
 #include "object.hpp"
 #include "camera.hpp"
 
+#include "VertexBuffer.hpp"
+
 const char* glsl_version = "#version 440";
 
 
 int main() {
+	AssetManager asset_manager;
+
 	int display_w, display_h;
 
 	glfwInit();
 
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 4);
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
 	glfwWindowHint(GLFW_SAMPLES, 4);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
@@ -67,25 +71,16 @@ int main() {
 
 
 	// Temporary test code to try and create and render a model
-	Model m;
-	m.load_from_file("train.obj");
-
-	// TODO: move this into model.cpp
-	uint32_t vao, vbo;
-	glGenVertexArrays(1, &vao);
-	glBindVertexArray(vao);
-	glEnableVertexAttribArray(0);
-	glEnableVertexAttribArray(1);
-
-	glGenBuffers(1, &vbo);
-	glBindBuffer(GL_ARRAY_BUFFER, vbo);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec4) * m.vertices.size() + sizeof(glm::vec3) * m.normals.size(), nullptr, GL_STATIC_DRAW);
-	glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(glm::vec4) * m.vertices.size(), &m.vertices[0][0]);
-	glBufferSubData(GL_ARRAY_BUFFER, sizeof(glm::vec4) * m.vertices.size(), sizeof(glm::vec3) * m.normals.size(), &m.normals[0].x);
+	Model& m = *asset_manager.LoadAsset<Model>("train.obj");
 
 
-	glVertexAttribPointer(0, 4, GL_FLOAT, 0, 0, 0); // vertex positions tightly packed
-	glVertexAttribPointer(1, 3, GL_FLOAT, 0, 0, (void*)(sizeof(glm::vec4) * m.vertices.size())); // and normals
+
+
+	VertexArray va;
+	va.set_layout(m.layout);
+	
+	va.set_data(m.gl_data);
+
 
 	// Set up a camera. For now this needs to be done manually
 	glm::mat4 projection = glm::perspective(45.f, 16.f / 9.f, 1.f, 100.f); // TODO: don't assume so much
@@ -123,6 +118,7 @@ int main() {
 
 		Shader::show_shaders_gui(show_shader_window);
 		Program::show_programs_gui(show_program_window);
+		asset_manager.render_asset_list();
 		train.render_gui();
 		train2.render_gui();
 
@@ -131,6 +127,7 @@ int main() {
 		glClearColor(0, 0, 0, 1);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+		va.bind();
 
 		train.render(c);
 		train2.render(c);
@@ -143,3 +140,4 @@ int main() {
 		glfwSwapBuffers(window);
 	}
 }
+

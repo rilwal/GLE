@@ -163,6 +163,7 @@
     <ClCompile Include="..\imgui\imgui_tables.cpp" />
     <ClCompile Include="..\imgui\imgui_widgets.cpp" />
     <ClCompile Include="..\imgui\misc\cpp\imgui_stdlib.cpp" />
+    <ClCompile Include="..\src\asset_manager.cpp" />
     <ClCompile Include="..\src\main.cpp" />
     <ClCompile Include="..\src\model.cpp" />
     <ClCompile Include="..\src\object.cpp" />
@@ -175,6 +176,7 @@
     <ClInclude Include="..\src\object.hpp" />
     <ClInclude Include="..\src\property_list.hpp" />
     <ClInclude Include="..\src\shaders.hpp" />
+    <ClInclude Include="..\src\VertexBuffer.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

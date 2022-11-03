@@ -6,6 +6,7 @@
 #include <vector>
 #include <map>
 
+#include "asset_manager.hpp"
 
 // Forward declarations
 struct Shader;
@@ -97,12 +98,6 @@ struct Program {
 
 	uint32_t program_id;
 	std::string info_log;
-
-
-
-	// TODO: Much better uniform handling
-	std::vector<std::string> float_uniforms;
-	std::vector<float> float_uniform_values;
 
 	static void show_programs_gui(bool& show);
 

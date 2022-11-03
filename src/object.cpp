@@ -76,7 +76,6 @@ void Object::render(Camera& c) {
 	// set up fixed name uniforms
 	if (material.uniforms.contains("_mvp")) {
 		glm::mat4 mvp = c.vp * model_matrix;
-
 		material.uniforms["_mvp"].value.m4 = mvp;
 	}
 
@@ -87,14 +86,11 @@ void Object::render(Camera& c) {
 	if (material.uniforms.contains("_time")) {
 		float time = glfwGetTime();
 		material.uniforms["_time"].value.f = time;
-
 	}
 
-	
 	material.use();
 	
 	// TODO: move this responsibility elsewhere
 	glDrawElements(GL_TRIANGLES, model->indices.size(), GL_UNSIGNED_INT, &model->indices[0]);
-
 }
 

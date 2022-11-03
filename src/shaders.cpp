@@ -278,7 +278,7 @@ void Program::link() {
 
 			// persist uniform values across reloads
 			if (uniforms.contains(u.name) && uniforms[u.name].type == u.type) {
-				u.value.m4 = uniforms[u.name].value.m4;
+				u.value = uniforms[u.name].value;
 			}
 
 			_uniforms[u.name] = u;
@@ -286,13 +286,16 @@ void Program::link() {
 
 		uniforms = _uniforms;
 		for (auto& material : materials) {
-			material.uniforms = uniforms;
-			for (auto& [name, u] : uniforms) {
+			//material.uniforms = uniforms;
+			std::map<std::string, Uniform> _uniforms = uniforms;
+
+			for (auto& [name, u] : _uniforms) {
 				if (material.uniforms.contains(u.name) && material.uniforms[u.name].type == u.type) {
-					u.value.m4 = uniforms[u.name].value.m4;
+					_uniforms[u.name].value = material.uniforms[u.name].value;
 				}
-			
 			}
+
+			material.uniforms = _uniforms;
 		}
 	}
 }
