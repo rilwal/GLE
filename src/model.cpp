@@ -204,14 +204,31 @@ void Model::load(const char* filename) {
 	normals = _normals;
 	uvs = _uvs;
 
+	bool generate_tangents   = false;
+	bool generate_bitangents = false;
+
 	bool has_norm = normals.size() != 0;
-	bool has_uvs = uvs.size() != 0;
+	bool has_uvs  = uvs.size() != 0;
 
 	size_t stride = sizeof(glm::vec4);
 	if (has_norm) stride += sizeof(glm::vec3);
 	if (has_uvs)  stride += sizeof(glm::vec2);
 
-	gl_data.resize(stride* vertices.size());
+	if (generate_tangents)	 stride += sizeof(glm::vec3);
+	if (generate_bitangents) stride += sizeof(glm::vec3);
+
+
+	if (generate_tangents) {
+		glm::vec3* tan1 = new glm::vec3[vertices.size()];
+		glm::vec3* tan2 = new glm::vec3[vertices.size()];
+
+		for (size_t a = 0; a < vertices.size() / 3; a++) {
+
+		}
+	}
+
+
+	gl_data.resize(stride * vertices.size());
 	for (size_t i = 0; i < vertices.size(); i++) {
 		size_t offset = 0;
 		memcpy(&gl_data[i * stride + offset], &vertices[i], sizeof(glm::vec4));
@@ -229,14 +246,14 @@ void Model::load(const char* filename) {
 
 	}
 
-	if (has_norm && has_uvs)
-		layout = { {"vertex_pos", ShaderDataType::Vec4}, { "normal", ShaderDataType::Vec3 }, {"uv", ShaderDataType::Vec2} };
-	else if (has_norm)
-		layout = { {"vertex_pos", ShaderDataType::Vec4}, { "normal", ShaderDataType::Vec3 } };
-	else if (has_uvs)
-		layout = { {"vertex_pos", ShaderDataType::Vec4}, { "uv", ShaderDataType::Vec2 } };
-	else
-		layout = { {"vertex_pos", ShaderDataType::Vec4} };
+
+	layout = {};
+
+	layout.append({ "vertex_pos", ShaderDataType::Vec4 });
+	if (has_norm)			 layout.append({ "normal", ShaderDataType::Vec3 });
+	if (has_uvs)			 layout.append({ "uvs", ShaderDataType::Vec2 });
+	if (generate_tangents)   layout.append({ "tangent", ShaderDataType::Vec3 });
+	if (generate_bitangents) layout.append({ "bitangent", ShaderDataType::Vec3 });
 
 }
 

@@ -34,7 +34,7 @@ void Shader::load_from_file(std::string filename, Shader::Type type) {
 	this->type = type;
 
 #ifdef _WIN32
-	errno_t error = fopen_s(&file, filename.c_str(), "r");
+	errno_t error = fopen_s(&file, filename.c_str(), "rb");
 	
 	if (error != 0) {
 		fprintf(stderr, "Failed to open file %s.\n", filename.c_str());
@@ -48,19 +48,28 @@ void Shader::load_from_file(std::string filename, Shader::Type type) {
 	}
 #endif
 	
+
 	fseek(file, 0, SEEK_END);
 	size_t filesize = ftell(file);
 	rewind(file);
 
-	source.resize(filesize);
-	fread(&source[0], filesize, 1, file);
+
+	std::vector<char> shader_src;
+	shader_src.resize(filesize + 2);
+
+
+	filesize = fread(shader_src.data(), 1, filesize, file);
 	fclose(file);
 
-	printf("Shader source: %s\n", source.c_str());
+	shader_src[filesize] = 0;
+	shader_src[filesize + 1] = 0;
+
+
+	printf("Shader source: %s\n", shader_src.data());
 
 	shader_id = glCreateShader((GLenum)type);
-	const char* source_cstr = source.c_str();
-	int32_t source_len = source.size();
+	const char* source_cstr = shader_src.data();
+	int32_t source_len = shader_src.size();
 	glShaderSource(shader_id, 1, &source_cstr, &source_len);
 
 	compiled = false;
@@ -199,6 +208,7 @@ void Shader::render_info_log() {
 }
 
 
+
 Program::Program() {
 	name = "Untitled Program";
 	programs.push_back(this);
@@ -212,7 +222,7 @@ void Program::link() {
 
 	if (fragment_shader) glAttachShader(program_id, fragment_shader->shader_id);
 	if (vertex_shader) glAttachShader(program_id, vertex_shader->shader_id);
-
+	if (compute_shader) glAttachShader(program_id, compute_shader->shader_id);
 
 	linked = false;
 
@@ -226,10 +236,14 @@ void Program::link() {
 
 	if (_linked) linked = true;
 
-	int32_t log_length = 0;
-	glGetProgramiv(program_id, GL_INFO_LOG_LENGTH, &log_length);
-	info_log.resize(log_length);
-	glGetShaderInfoLog(program_id, log_length, &log_length, &info_log[0]);
+	if (!linked) {
+		int32_t log_length = 0;
+		glGetProgramiv(program_id, GL_INFO_LOG_LENGTH, &log_length);
+		info_log.resize(log_length);
+		glGetProgramInfoLog(program_id, log_length, &log_length, info_log.data());// &info_log[0]);
+
+		printf("%s\n", info_log);
+	}
 
 	if (linked) {
 		// Query the program for its uniforms
@@ -274,6 +288,22 @@ void Program::link() {
 				u.value.m4 = glm::identity<glm::mat4>();
 				u.type = Uniform::Type::Mat4;
 				break;
+
+			case GL_SAMPLER_2D:
+				u.value.i = 0;
+				u.type = Uniform::Type::Texture2D;
+				break;
+			
+			case GL_SAMPLER_CUBE:
+				u.value.i = 0;
+				u.type = Uniform::Type::TextureCube;
+				break;
+
+			case GL_IMAGE_2D:
+				u.value.i = 0;
+				u.type = Uniform::Type::Image2D;
+				break;
+
 			}
 
 			// persist uniform values across reloads
@@ -337,6 +367,11 @@ void Program::render_gui_segment() {
 					case Uniform::Type::Mat4:
 						ImGui::PLProp(uniform.name, uniform.value.m4);
 						break;
+
+					case Uniform::Type::Texture2D:
+					case Uniform::Type::TextureCube:
+						ImGui::PLTexture(uniform.name, uniform.value.i);
+						break;
 					}
 				}
 			}
@@ -361,6 +396,20 @@ void Program::render_gui_segment() {
 }
 
 
+void Program::render_info_log() {
+	if (show_info_log) {
+		char title[1024];
+		snprintf(title, 1023, "Info log for %s", name.c_str());
+		if (ImGui::Begin(title, &show_info_log)) {
+			ImGui::Text("Info Log:\n%s", info_log.c_str());
+		}
+
+		ImGui::End();
+	}
+}
+
+
+
 void Program::show_programs_gui(bool& show) {
 	if (show && ImGui::Begin("Programs", &show)) {
 		if (ImGui::BeginPropList("Programs")) {
@@ -374,6 +423,12 @@ void Program::show_programs_gui(bool& show) {
 
 		
 		ImGui::End();
+	}
+
+	for (auto& program : programs) {
+		if (program->show_info_log) {
+			program->render_info_log();
+		}
 	}
 }
 
@@ -431,6 +486,12 @@ void Material::render_gui_segment() {
 			case Program::Uniform::Type::Mat4:
 				ImGui::PLProp(uniform.name, uniform.value.m4);
 				break;
+
+
+			case Program::Uniform::Type::Texture2D:
+			case Program::Uniform::Type::TextureCube:
+				ImGui::PLTexture(uniform.name, uniform.value.i);
+				break;
 			}
 		}
 	}
@@ -440,6 +501,9 @@ void Material::render_gui_segment() {
 void Material::use() {
 
 	glUseProgram(program->program_id);
+
+	uint32_t textures_activated = 0;
+	uint32_t images_activated = 0;
 
 	for (auto& [name, uniform] : uniforms) {
 		switch (uniform.type) {
@@ -454,6 +518,22 @@ void Material::use() {
 
 		case Program::Uniform::Type::Mat4:
 			glUniformMatrix4fv(uniform.location, 1, false, &uniform.value.m4[0][0]);
+			break;
+
+
+		case Program::Uniform::Type::TextureCube:
+			glActiveTexture(GL_TEXTURE0 + textures_activated);
+			glBindTexture(GL_TEXTURE_CUBE_MAP, uniform.value.i);
+			glUniform1i(uniform.location, textures_activated);
+			textures_activated++;
+			break;
+
+
+		case Program::Uniform::Type::Texture2D:
+			glActiveTexture(GL_TEXTURE0 + textures_activated);
+			glBindTexture(GL_TEXTURE_2D, uniform.value.i);
+			glUniform1i(uniform.location, textures_activated);
+			textures_activated++;
 			break;
 		}
 	}

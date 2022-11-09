@@ -17,12 +17,14 @@ struct Material;
 struct Shader {
 	enum class Type {
 		VERTEX = GL_VERTEX_SHADER,
-		FRAGMENT = GL_FRAGMENT_SHADER
+		FRAGMENT = GL_FRAGMENT_SHADER,
+		COMPUTE = GL_COMPUTE_SHADER
 	};
 
 	static inline const std::map<Type, std::string> TypeNames = {
 		{Type::VERTEX, "Vertex"},
-		{Type::FRAGMENT, "Fragment"}
+		{Type::FRAGMENT, "Fragment"},
+		{Type::COMPUTE, "Compute"}
 	};
 
 	// shows the GUI for all shaders
@@ -33,7 +35,6 @@ struct Shader {
 	Type type;
 	std::string name;
 	std::string filename;
-	std::string source;
 	std::string info_log;
 
 	uint32_t shader_id;
@@ -64,7 +65,10 @@ struct Program {
 			Color3,
 			Vec4,
 			Color4,
-			Mat4
+			Mat4,
+			Texture2D,
+			Image2D,
+			TextureCube
 		};
 
 		// Because a uniform can have many values, we can use a union here
@@ -93,8 +97,9 @@ struct Program {
 	std::vector<Shader> shaders;
 	std::string name;
 
-	Shader* vertex_shader;
-	Shader* fragment_shader;
+	Shader* vertex_shader = nullptr;
+	Shader* fragment_shader = nullptr;
+	Shader* compute_shader = nullptr;
 
 	uint32_t program_id;
 	std::string info_log;
@@ -109,6 +114,7 @@ struct Program {
 	// Make this the active shader
 	void use();
 
+	void render_info_log();
 
 	size_t create_material();
 };

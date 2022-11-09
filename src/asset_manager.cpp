@@ -3,6 +3,19 @@
 
 #include <imgui.h>
 
+void IAsset::render_asset_list_entry() {
+	bool open = ImGui::BeginPropListEntry(path);
+
+	ImGui::TableNextRow();
+	if (open) {
+		ImGui::PLInfo("Type", "asset_type");
+
+		ImGui::EndPropListEntry();
+	}
+
+	ImGui::PopID();
+}
+
 void AssetManager::render_asset_list() {
 	static bool show = true;
 	if (show) {
@@ -14,16 +27,7 @@ void AssetManager::render_asset_list() {
 					ImGui::TableNextRow();
 					ImGui::TableSetColumnIndex(0);
 
-					bool open = ImGui::BeginPropListEntry(asset->path);
-
-					ImGui::TableNextRow();
-					if (open) {
-						ImGui::PLInfo("Type", asset->asset_type);
-
-						ImGui::EndPropListEntry();
-					}
-
-					ImGui::PopID();
+					asset->render_asset_list_entry();
 
 				}
 

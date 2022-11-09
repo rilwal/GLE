@@ -168,6 +168,7 @@
     <ClCompile Include="..\src\model.cpp" />
     <ClCompile Include="..\src\object.cpp" />
     <ClCompile Include="..\src\shaders.cpp" />
+    <ClCompile Include="..\src\texture.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\asset_manager.hpp" />
@@ -176,6 +177,8 @@
     <ClInclude Include="..\src\object.hpp" />
     <ClInclude Include="..\src\property_list.hpp" />
     <ClInclude Include="..\src\shaders.hpp" />
+    <ClInclude Include="..\src\stb_image.h" />
+    <ClInclude Include="..\src\texture.hpp" />
     <ClInclude Include="..\src\VertexBuffer.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

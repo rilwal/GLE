@@ -15,6 +15,7 @@
 #include "shaders.hpp"
 #include "model.hpp"
 #include "camera.hpp"
+#include "VertexBuffer.hpp"
 
 struct Object {
 	std::string name;
@@ -27,6 +28,7 @@ struct Object {
 	size_t material_id; // The index of the material in the program
 
 	Model* model;
+	VertexBuffer* vertex_buffer;
 
 	Object(std::string name);
 

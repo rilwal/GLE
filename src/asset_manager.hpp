@@ -19,6 +19,8 @@ public:
 	virtual void load(const char* filename) = 0;
 	virtual void unload() = 0;
 
+	virtual void render_asset_list_entry();
+
 	inline bool is_loaded() { return _is_loaded; };
 
 };

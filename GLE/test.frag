@@ -20,3 +20,4 @@ void main() {
 
 	fragColour = vec4(c_color * diffuse + c_color * ambient_light, 1.0)  * brightness;
 }
+

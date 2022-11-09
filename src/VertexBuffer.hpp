@@ -92,6 +92,8 @@ struct VertexArrayLayout {
 	VertexArrayLayout(std::initializer_list<VertexAttribute> il)
 		: vertex_attributes(il) { };
 
+	inline void append(const VertexAttribute& va) { vertex_attributes.push_back(va); };
+
 	constexpr std::vector<VertexAttribute>::iterator begin() { return vertex_attributes.begin(); }
 	constexpr std::vector<VertexAttribute>::iterator end() { return vertex_attributes.end(); }
 
@@ -99,7 +101,7 @@ struct VertexArrayLayout {
 
 
 // An OpenGL Vertex Array Object
-class VertexArray {
+class VertexBuffer {
 private:
 	uint32_t m_id = 0;
 	uint32_t m_stride = 0;
@@ -109,7 +111,7 @@ private:
 	VertexArrayLayout m_layout = {};
 
 public:
-	VertexArray() {
+	VertexBuffer() {
 		glGenVertexArrays(1, &m_id);
 		glBindVertexArray(m_id);
 
@@ -117,7 +119,7 @@ public:
 		glBindBuffer(GL_ARRAY_BUFFER, m_buffer_id);
 	}
 
-	~VertexArray() {
+	~VertexBuffer() {
 		if (m_id) {
 			glDeleteVertexArrays(1, &m_id);
 		}
@@ -129,7 +131,7 @@ public:
 
 	void bind() {
 		glBindVertexArray(m_id);
-		glBindBuffer(GL_ARRAY_BUFFER, m_buffer_id);
+		//glBindVertexBuffer(m_id, m_buffer_id, 0, m_stride);
 	}
 
 	void set_layout(VertexArrayLayout layout) {
@@ -153,21 +155,23 @@ public:
 			std::cout << std::format("glVertexArrayAttribFormat(id={}, index={}, GetSize(dt)={}, GetGLType(dt)={}, false, offset={});", m_id, index, GetSize(dt), GetGLType(dt), offset);
 
 			glEnableVertexAttribArray(index);
-			glVertexAttribPointer(index, GetComponentCount(dt), GetGLType(dt), false, size, (const void*)offset);
-			//glVertexArrayAttribFormat(m_id, index, GetSize(dt), GetGLType(dt), false, offset);
-
+			//glVertexAttribPointer(index, GetComponentCount(dt), GetGLType(dt), false, size, (const void*)offset);
+			glVertexArrayAttribFormat(m_id, index, GetComponentCount(dt), GetGLType(dt), false, offset);
+			glVertexArrayAttribBinding(m_id, index, 0);
 			attribute.offset = offset;
 
 			offset += GetSize(dt);
 			index++;
 		}
 
+		glVertexArrayVertexBuffer(m_id, 0, m_buffer_id, 0, size);
+
 		m_stride = size;
 	}
 	
 
 	void resize() {
-
+	
 	}
 
 
@@ -177,8 +181,4 @@ public:
 
 };
 
-
-class VertexBuffer {
-	
-};
 

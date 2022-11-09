@@ -3,11 +3,13 @@
 /* Define a basic property list to be used with ImGui */
 
 #include <string>
+#include <format>
 
 #include <imgui.h>
 #include <misc/cpp/imgui_stdlib.h>
 
 #include "shaders.hpp"
+#include "texture.hpp"
 
 
 // Add to the ImGui namespace for convenience
@@ -234,6 +236,24 @@ namespace ImGui {
 		ImGui::TableNextRow();
 	}
 
+	// An RO int PropList entry
+	inline void PLInfo(std::string label, int& prop) {
+
+		ImGui::PushID(label.c_str());
+		ImGui::TableSetColumnIndex(0);
+		ImGui::AlignTextToFramePadding();
+
+		ImGui::TreeNodeEx(label.c_str(), leaf_node_flags, label.c_str());
+
+		ImGui::TableSetColumnIndex(1);
+		ImGui::SetNextItemWidth(-FLT_MIN);
+
+		ImGui::Text(std::format("{}", prop).c_str());
+		ImGui::NextColumn();
+		ImGui::PopID();
+		ImGui::TableNextRow();
+	}
+
 
 	// A Vec3 entry
 	inline void PLProp(std::string label, glm::vec3& prop) {
@@ -317,5 +337,45 @@ namespace ImGui {
 		ImGui::NextColumn();
 		ImGui::TableNextRow();
 	}
+
+	// A Texture entry
+	// A Mat4 entry
+	inline void PLProp(std::string label, Texture& prop) {
+		ImGui::PushID(label.c_str());
+		ImGui::TableSetColumnIndex(0);
+		ImGui::AlignTextToFramePadding();
+
+		ImGui::TreeNodeEx(label.c_str(), leaf_node_flags, label.c_str());
+
+		ImGui::TableSetColumnIndex(1);
+		ImGui::SetNextItemWidth(-FLT_MIN);
+
+		ImGui::Image((ImTextureID)prop.get_tex_id(), ImVec2(128, 128), ImVec2(0, 0), ImVec2(1, 1));
+
+		ImGui::NextColumn();
+		ImGui::PopID();
+		ImGui::TableNextRow();
+	}
+
+
+	// A Texture entry
+	// A Mat4 entry
+	inline void PLTexture(std::string label, uint32_t texture) {
+		ImGui::PushID(label.c_str());
+		ImGui::TableSetColumnIndex(0);
+		ImGui::AlignTextToFramePadding();
+
+		ImGui::TreeNodeEx(label.c_str(), leaf_node_flags, label.c_str());
+
+		ImGui::TableSetColumnIndex(1);
+		ImGui::SetNextItemWidth(-FLT_MIN);
+
+		ImGui::Image((ImTextureID)texture, ImVec2(128, 128), ImVec2(0, 0), ImVec2(1, 1));
+
+		ImGui::NextColumn();
+		ImGui::PopID();
+		ImGui::TableNextRow();
+	}
+
 }
 

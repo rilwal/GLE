@@ -10,6 +10,8 @@
 #define _USE_MATH_DEFINES
 #include <math.h>
 
+#include "shaders.hpp"
+
 float radians(float degrees) {
 	return degrees * (M_PI / 180.f);
 }
@@ -61,13 +63,14 @@ void Object::render_gui() {
 
 
 void Object::render(Camera& c) {
+	vertex_buffer->bind();
 	Material& material = program->materials[material_id];
 
 	if (!program) return;
 	if (!model) return;
 
 	glm::mat4 translation_matrix = glm::translate(position);
-	glm::mat4 rotation_matrix = glm::rotate(glm::rotate(glm::rotate(radians(rotation.x), glm::vec3{1, 0, 0}), radians(rotation.y), { 0.f, 1.f, 0.f }), radians(rotation.z), { 0.f, 0.f, 1.f });
+	glm::mat4 rotation_matrix = glm::rotate(glm::rotate(glm::rotate(radians(rotation.x), glm::vec3{ 1, 0, 0 }), radians(rotation.y), { 0.f, 1.f, 0.f }), radians(rotation.z), { 0.f, 0.f, 1.f });
 	glm::mat4 scale_matrix = glm::scale(scale);
 
 	glm::mat4 model_matrix = translation_matrix * rotation_matrix * scale_matrix;
@@ -83,10 +86,14 @@ void Object::render(Camera& c) {
 		material.uniforms["_model"].value.m4 = model_matrix;
 	}
 
+
+
 	if (material.uniforms.contains("_time")) {
 		float time = glfwGetTime();
 		material.uniforms["_time"].value.f = time;
 	}
+
+
 
 	material.use();
 	
