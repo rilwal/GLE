@@ -10,7 +10,9 @@
 
 struct Camera {
 	glm::mat4 vp;
-	
+	glm::mat4 v;
+	glm::mat4 p;
+
 	float gamma = 1.0;
 	float exposure = 2.0;
 };

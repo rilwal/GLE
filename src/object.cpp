@@ -7,6 +7,10 @@
 
 #include <GLFW/glfw3.h>
 
+#include "ImGuizmo.h"
+
+
+
 #define _USE_MATH_DEFINES
 #include <math.h>
 
@@ -16,20 +20,20 @@ float radians(float degrees) {
 	return degrees * (M_PI / 180.f);
 }
 
-Object::Object(std::string name) {
+Object::Object(std::string name, glm::vec3 position, glm::vec3 scale) {
 	this->name = name;
 	program = nullptr;
 	model = nullptr;
 	material_id = 0;
 
-	position = { 0, 0, 0 };
-	rotation = { 0, 0, 0 };
-	scale = { 1, 1, 1 };
+
+	model_matrix = glm::translate(glm::scale(glm::mat4(1), scale), position);
 }
 
 
 void Object::render_gui() {
 	Material& material = program->materials[material_id];
+	ImGuizmo::DecomposeMatrixToComponents(&model_matrix[0][0], &position[0], &rotation[0], &scale[0]);
 
 	ImGui::PushID(this);
 	if (ImGui::Begin(name.c_str())) {
@@ -55,6 +59,7 @@ void Object::render_gui() {
 		ImGui::EndPropList();
 
 	}
+	ImGuizmo::RecomposeMatrixFromComponents(&position[0], &rotation[0], &scale[0], &model_matrix[0][0]);
 
 	ImGui::End();
 	ImGui::PopID();
@@ -69,11 +74,12 @@ void Object::render(Camera& c) {
 	if (!program) return;
 	if (!model) return;
 
-	glm::mat4 translation_matrix = glm::translate(position);
-	glm::mat4 rotation_matrix = glm::rotate(glm::rotate(glm::rotate(radians(rotation.x), glm::vec3{ 1, 0, 0 }), radians(rotation.y), { 0.f, 1.f, 0.f }), radians(rotation.z), { 0.f, 0.f, 1.f });
-	glm::mat4 scale_matrix = glm::scale(scale);
+	//glm::mat4 translation_matrix = glm::translate(position);
+	//glm::mat4 rotation_matrix = glm::rotate(glm::rotate(glm::rotate(radians(rotation.x), glm::vec3{ 1, 0, 0 }), radians(rotation.y), { 0.f, 1.f, 0.f }), radians(rotation.z), { 0.f, 0.f, 1.f });
+	//glm::mat4 scale_matrix = glm::scale(scale);
+	
 
-	glm::mat4 model_matrix = translation_matrix * rotation_matrix * scale_matrix;
+	//glm::mat4 model_matrix = translation_matrix * rotation_matrix * scale_matrix;
 
 
 	// set up fixed name uniforms

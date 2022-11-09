@@ -2,6 +2,7 @@
 #include <imgui.h>
 #include <backends/imgui_impl_glfw.h>
 #include <backends/imgui_impl_opengl3.h>
+#include "ImGuizmo.h"
 
 #define GLAD_GL_IMPLEMENTATION
 #include <glad/gl.h>
@@ -22,6 +23,29 @@
 #include "property_list.hpp"
 
 const char* glsl_version = "#version 440";
+
+
+
+void EditTransform(const Camera& camera, glm::mat4& matrix)
+{
+	ImGuiIO& io = ImGui::GetIO();
+
+
+	static ImGuizmo::OPERATION mCurrentGizmoOperation(ImGuizmo::ROTATE);
+	static ImGuizmo::MODE mCurrentGizmoMode(ImGuizmo::WORLD);
+	if (ImGui::IsKeyPressed('Q'))
+		mCurrentGizmoOperation = ImGuizmo::TRANSLATE;
+	if (ImGui::IsKeyPressed('W'))
+		mCurrentGizmoOperation = ImGuizmo::ROTATE;
+	if (ImGui::IsKeyPressed('E')) // r Key
+		mCurrentGizmoOperation = ImGuizmo::SCALE;
+	
+
+	ImGuizmo::SetRect(0, 0, io.DisplaySize.x, io.DisplaySize.y);
+	ImGuizmo::Manipulate(&camera.v[0][0], &camera.p[0][0], mCurrentGizmoOperation, mCurrentGizmoMode, &matrix[0][0], NULL, NULL);
+}
+
+
 
 
 int main() {
@@ -97,6 +121,7 @@ int main() {
 	ImGui_ImplGlfw_InitForOpenGL(window, true);
 	ImGui_ImplOpenGL3_Init(glsl_version);
 
+	io.Fonts->AddFontFromFileTTF("c:\\Windows\\Fonts\\segoeui.ttf", 18.0f);
 
 	// Temporary test code to try and create and render a model
 	Model& m = *asset_manager.LoadAsset<Model>("train.obj");
@@ -117,9 +142,6 @@ int main() {
 	glGenTextures(1, &fb_texture);
 	glBindTexture(GL_TEXTURE_2D, fb_texture);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, 1920, 1080, 0, GL_RGBA, GL_FLOAT, nullptr);
-	glTexImage2D(GL_TEXTURE_2D, 1, GL_RGBA16F,  960,  540, 0, GL_RGBA, GL_FLOAT, nullptr);
-	glTexImage2D(GL_TEXTURE_2D, 2, GL_RGBA16F,  480,  270, 0, GL_RGBA, GL_FLOAT, nullptr);
-	glTexImage2D(GL_TEXTURE_2D, 3, GL_RGBA16F,  240,  135, 0, GL_RGBA, GL_FLOAT, nullptr);
 
 	glGenerateMipmap(GL_TEXTURE_2D);
 
@@ -154,22 +176,20 @@ int main() {
 
 	glm::mat4 vp = projection * view;
 	
-	Camera c {vp};
+	Camera c {vp, view, projection};
 
-	Object train("Train");
-	Object train2("Another Train");
+	Object train("Train", {0, 0, -4});
+	Object train2("Another Train", {0, 0, -8});
 
 	train.model = &m;
 	train.program = &p;
 	train.material_id = p.create_material();
 	train.vertex_buffer = &vb;
-	train.position.z = -4;
 
 	train2.model = &m;
 	train2.program = &pbr2;
 	train2.material_id = pbr2.create_material();
 	train2.vertex_buffer = &vb;
-	train2.position.z = -8;
 
 	pbr2.materials[train2.material_id].uniforms["albedo_map"].value.i = tex.get_tex_id();
 
@@ -179,12 +199,11 @@ int main() {
 	boombox_vbo.set_layout(boombox_model.layout);
 	boombox_vbo.set_data(boombox_model.gl_data);
 
-	Object boombox("Boombox");
+	Object boombox("Boombox", glm::vec3(0), glm::vec3(500));
 	boombox.model = &boombox_model;
 	boombox.program = &pbr2;
 	boombox.material_id = pbr2.create_material();
 	boombox.vertex_buffer = &boombox_vbo;
-	boombox.scale = glm::vec3(500);
 
 	Texture* boombox_albedo    = asset_manager.LoadAsset<Texture2D>("T_BoomBox_A.png");
 	Texture* boombox_normal    = asset_manager.LoadAsset<Texture2D>("T_BoomBox_N.png");
@@ -228,12 +247,32 @@ int main() {
 
 
 	// Load a compute shader to do bloomies
-	Shader bloom_s;
-	bloom_s.load_from_file("bloom.glsl", Shader::Type::COMPUTE);
+	Shader bloom_prefilter_s;
+	bloom_prefilter_s.load_from_file("bloom_pf.glsl", Shader::Type::COMPUTE);
+
+	Program bloom_prefilter;
+	bloom_prefilter.compute_shader = &bloom_prefilter_s;
+	bloom_prefilter.link();
+
+
+	Shader bloom_downsample_s;
+	bloom_downsample_s.load_from_file("bloom_ds.glsl", Shader::Type::COMPUTE);
 	
-	Program bloom;
-	bloom.compute_shader = &bloom_s;
-	bloom.link();
+	Program bloom_downsample;
+	bloom_downsample.compute_shader = &bloom_downsample_s;
+	bloom_downsample.link();
+
+
+	Shader bloom_upsample_s;
+	bloom_upsample_s.load_from_file("bloom_us.glsl", Shader::Type::COMPUTE);
+
+	Program bloom_upsample;
+	bloom_upsample.compute_shader = &bloom_upsample_s;
+	bloom_upsample.link();
+
+
+	Object* selected_object = &boombox;
+
 
 	while (!glfwWindowShouldClose(window)) {
 		glfwPollEvents();
@@ -242,13 +281,33 @@ int main() {
 
 		ImGui_ImplOpenGL3_NewFrame();
 		ImGui_ImplGlfw_NewFrame();
+
 		ImGui::NewFrame();
+		ImGuizmo::BeginFrame();
 
 		ImGui::DockSpaceOverViewport(nullptr, ImGuiDockNodeFlags_PassthruCentralNode);
 
 		ImGui::ShowDemoWindow();
 
+		ImGui::PushID("Gizmo");
+		glm::mat4 juke = {};
+		ImGuizmo::RecomposeMatrixFromComponents(&selected_object->position[0], &selected_object->rotation[0], &selected_object->scale[0], &juke[0][0]);
+
+		EditTransform(c, selected_object->model_matrix);
+		
+		ImGui::PopID();
+
+		ImGuizmo::DecomposeMatrixToComponents(&juke[0][0], &selected_object->position[0], &selected_object->rotation[0], &selected_object->scale[0]);
+
+
+
 		ImGui::Begin("Debug");
+
+		if (ImGui::Button("Select Train"))
+			selected_object = &train;
+
+		if (ImGui::Button("Select BB"))
+			selected_object = &boombox;
 
 		if (ImGui::Button("Reload shaders")) {
 			pbr_frag.load_from_file("pbr.frag", Shader::Type::FRAGMENT);
@@ -288,7 +347,7 @@ int main() {
 
 		//vb.bind();
 
-		//train.render(c);
+		train.render(c);
 		train2.render(c);
 
 		boombox.render(c);
@@ -299,9 +358,12 @@ int main() {
 		ImGui::DragFloat("Gamma", &c.gamma, 0.01, 0.0, 5.0);
 		ImGui::DragFloat("Exposure", &c.exposure, 0.01, 0.0, 5.0);
 
+		static float bloom_threshold = 1.0;
+		ImGui::DragFloat("Bloom threshold", &bloom_threshold);
+
 		ImGui::End();
 
-
+		
 		ImGui::EndFrame();
 		//ImGui::UpdatePlatformWindows();
 
@@ -311,16 +373,61 @@ int main() {
 
 
 		// Try to apply our post-processing effects
-		bloom.use();
+		int32_t width, height;
 
-		glUniform1i(glGetUniformLocation(bloom.program_id, "mip_in"), 1);
-		glUniform1i(glGetUniformLocation(bloom.program_id, "mip_out"), 2);
+		bloom_prefilter.use();
+		glUniform1i(glGetUniformLocation(bloom_prefilter.program_id, "mip_in"), 1);
+		glUniform1i(glGetUniformLocation(bloom_prefilter.program_id, "mip_out"), 2);
+		//glUniform1f(glGetUniformLocation(bloom_prefilter.program_id, "threshold"), bloom_threshold);
 
-		glBindImageTexture(1, fb_texture, 0, false, 0, GL_READ_WRITE, GL_RGBA16F);
-		glBindImageTexture(2, fb_texture, 1, false, 0, GL_READ_WRITE, GL_RGBA16F);
 
-		glDispatchCompute(1920 / 2, 1080 / 2, 1);
+		glBindImageTexture(1, fb_texture, 0, false, 0, GL_READ_ONLY, GL_RGBA16F);
+		glBindImageTexture(2, fb_texture, 1, false, 0, GL_WRITE_ONLY, GL_RGBA16F);
+		glGetTextureLevelParameteriv(fb_texture, 1, GL_TEXTURE_WIDTH, &width);
+		glGetTextureLevelParameteriv(fb_texture, 1, GL_TEXTURE_HEIGHT, &height);
+
+		glDispatchCompute(width, height, 1);
 		glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
+
+		bloom_downsample.use();
+		glUniform1i(glGetUniformLocation(bloom_downsample.program_id, "mip_in"), 1);
+		glUniform1i(glGetUniformLocation(bloom_downsample.program_id, "mip_out"), 2);
+
+		int32_t level = 1;
+
+
+		while (width > 1 && height > 1) {
+			glBindImageTexture(1, fb_texture, level, false, 0, GL_READ_WRITE, GL_RGBA16F);
+			glBindImageTexture(2, fb_texture, level + 1, false, 0, GL_READ_WRITE, GL_RGBA16F);
+
+			glGetTextureLevelParameteriv(fb_texture, level + 1, GL_TEXTURE_WIDTH, &width);
+			glGetTextureLevelParameteriv(fb_texture, level + 1, GL_TEXTURE_HEIGHT, &height);
+
+			glDispatchCompute(width, height, 1);
+			glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
+
+			level++;
+		}
+
+		level--;
+
+		bloom_upsample.use();
+		glUniform1i(glGetUniformLocation(bloom_upsample.program_id, "mip_in"), 1);
+		glUniform1i(glGetUniformLocation(bloom_upsample.program_id, "mip_out"), 2);
+		//glUniform1f(glGetUniformLocation(bloom_upsample.program_id, "radius"), 1.0);
+
+		while (level > 0) {
+			glBindImageTexture(1, fb_texture, level, false, 0, GL_READ_WRITE, GL_RGBA16F);
+			glBindImageTexture(2, fb_texture, level - 1, false, 0, GL_READ_WRITE, GL_RGBA16F);
+
+			glGetTextureLevelParameteriv(fb_texture, level - 1, GL_TEXTURE_WIDTH, &width);
+			glGetTextureLevelParameteriv(fb_texture, level - 1, GL_TEXTURE_HEIGHT, &height);
+
+			glDispatchCompute(width, height, 1);
+			glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
+
+			level--;
+		}
 
 		//glBindImageTexture(1, fb_texture, 1, false, 0, GL_READ_WRITE, GL_RGBA16F);
 		//glBindImageTexture(2, fb_texture, 2, false, 0, GL_READ_WRITE, GL_RGBA16F);
@@ -330,11 +437,11 @@ int main() {
 
 		// Render our framebuffer to the screen
 
+
 		quad_vbo.bind();
-		post.materials[post_mat_id].use();
 		post.materials[post_mat_id].uniforms["gamma"].value.f = c.gamma;
 		post.materials[post_mat_id].uniforms["exposure"].value.f = c.exposure;
-
+		post.materials[post_mat_id].use();
 
 		glDisable(GL_DEPTH_TEST);
 		glDrawArrays(GL_TRIANGLES, 0, 6);

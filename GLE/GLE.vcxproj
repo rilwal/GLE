@@ -72,22 +72,22 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>C:\Users\rilwa\Documents\code\GLE\imgui;C:\dev\include;$(IncludePath)</IncludePath>
+    <IncludePath>C:\Users\rilwa\Documents\code\GLE\vendor\imguizmo;C:\Users\rilwa\Documents\code\GLE\imgui;C:\dev\include;$(IncludePath)</IncludePath>
     <LibraryPath>C:\dev\lib\x86;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>C:\Users\rilwa\Documents\code\GLE\imgui;C:\dev\include;$(IncludePath)</IncludePath>
+    <IncludePath>C:\Users\rilwa\Documents\code\GLE\vendor\imguizmo;C:\Users\rilwa\Documents\code\GLE\imgui;C:\dev\include;$(IncludePath)</IncludePath>
     <LibraryPath>C:\dev\lib\x86;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>C:\Users\rilwa\Documents\code\GLE\imgui;C:\dev\include;$(IncludePath)</IncludePath>
+    <IncludePath>C:\Users\rilwa\Documents\code\GLE\vendor\imguizmo;C:\Users\rilwa\Documents\code\GLE\imgui;C:\dev\include;$(IncludePath)</IncludePath>
     <LibraryPath>C:\dev\lib\x64;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>C:\Users\rilwa\Documents\code\GLE\imgui;C:\dev\include;$(IncludePath)</IncludePath>
+    <IncludePath>C:\Users\rilwa\Documents\code\GLE\vendor\imguizmo;C:\Users\rilwa\Documents\code\GLE\imgui;C:\dev\include;$(IncludePath)</IncludePath>
     <LibraryPath>C:\dev\lib\x64;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
@@ -169,6 +169,7 @@
     <ClCompile Include="..\src\object.cpp" />
     <ClCompile Include="..\src\shaders.cpp" />
     <ClCompile Include="..\src\texture.cpp" />
+    <ClCompile Include="..\vendor\imguizmo\ImGuizmo.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\asset_manager.hpp" />
@@ -180,6 +181,7 @@
     <ClInclude Include="..\src\stb_image.h" />
     <ClInclude Include="..\src\texture.hpp" />
     <ClInclude Include="..\src\VertexBuffer.hpp" />
+    <ClInclude Include="..\vendor\imguizmo\ImGuizmo.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

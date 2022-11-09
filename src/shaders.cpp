@@ -261,7 +261,7 @@ void Program::link() {
 
 			glGetActiveUniform(program_id, i, 1024, &length, &uniform_size, &uniform_type, uniform_name);
 			Uniform u;
-			u.location = i;
+			u.location = glGetUniformLocation(program_id, uniform_name);
 			u.name = uniform_name;
 			u.show_in_ui = !u.name.starts_with("_");
 
@@ -270,7 +270,7 @@ void Program::link() {
 				u.type = Uniform::Type::Float;
 
 				
-				glGetUniformfv(program_id, i, &u.value.f);
+				glGetUniformfv(program_id, u.location, &u.value.f);
 				break;
 			case GL_FLOAT_VEC3:
 				// if the name starts with c_, treat it as a color
@@ -282,7 +282,7 @@ void Program::link() {
 					u.type = Uniform::Type::Vec3;
 				}
 
-				glGetUniformfv(program_id, i, &u.value.f);
+				glGetUniformfv(program_id, u.location, &u.value.f);
 				break;
 			case GL_FLOAT_MAT4:
 				u.value.m4 = glm::identity<glm::mat4>();
@@ -352,24 +352,25 @@ void Program::render_gui_segment() {
 			for (auto& [name, uniform] : uniforms) {
 				if (uniform.show_in_ui) {
 					switch (uniform.type) {
-					case Uniform::Type::Float:
+					case Program::Uniform::Type::Float:
 						ImGui::PLProp(uniform.name, uniform.value.f);
 						break;
 
-					case Uniform::Type::Vec3:
+					case Program::Uniform::Type::Vec3:
 						ImGui::PLProp(uniform.name, uniform.value.v3);
 						break;
 
-					case Uniform::Type::Color3:
+					case Program::Uniform::Type::Color3:
 						ImGui::PLColor(uniform.name, uniform.value.v3);
 						break;
 
-					case Uniform::Type::Mat4:
+					case Program::Uniform::Type::Mat4:
 						ImGui::PLProp(uniform.name, uniform.value.m4);
 						break;
 
-					case Uniform::Type::Texture2D:
-					case Uniform::Type::TextureCube:
+
+					case Program::Uniform::Type::Texture2D:
+					case Program::Uniform::Type::TextureCube:
 						ImGui::PLTexture(uniform.name, uniform.value.i);
 						break;
 					}
@@ -436,19 +437,38 @@ void Program::use() {
 
 	glUseProgram(program_id);
 
+	uint32_t textures_activated = 0;
+	uint32_t images_activated = 0;
+
 	for (auto& [name, uniform] : uniforms) {
 		switch (uniform.type) {
-		case Uniform::Type::Float:
+		case Program::Uniform::Type::Float:
 			glUniform1f(uniform.location, uniform.value.f);
 			break;
 
-		case Uniform::Type::Color3:
-		case Uniform::Type::Vec3:
+		case Program::Uniform::Type::Color3:
+		case Program::Uniform::Type::Vec3:
 			glUniform3f(uniform.location, uniform.value.v3.x, uniform.value.v3.y, uniform.value.v3.z);
 			break;
 
-		case Uniform::Type::Mat4:
+		case Program::Uniform::Type::Mat4:
 			glUniformMatrix4fv(uniform.location, 1, false, &uniform.value.m4[0][0]);
+			break;
+
+
+		case Program::Uniform::Type::TextureCube:
+			glActiveTexture(GL_TEXTURE0 + textures_activated);
+			glBindTexture(GL_TEXTURE_CUBE_MAP, uniform.value.i);
+			glUniform1i(uniform.location, textures_activated);
+			textures_activated++;
+			break;
+
+
+		case Program::Uniform::Type::Texture2D:
+			glActiveTexture(GL_TEXTURE0 + textures_activated);
+			glBindTexture(GL_TEXTURE_2D, uniform.value.i);
+			glUniform1i(uniform.location, textures_activated);
+			textures_activated++;
 			break;
 		}
 	}
